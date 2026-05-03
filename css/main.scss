@@ -240,10 +240,10 @@ pre code {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  object-fit: cover;
-  object-position: 50% 18%;
-  display: block;
-  background: $bg-elev;
+  background-size: 130% auto;
+  background-position: 50% 22%;
+  background-repeat: no-repeat;
+  background-color: $bg-elev;
 }
 @media (max-width: 540px) {
   .hero-flex { gap: 1rem; }

@@ -9,7 +9,12 @@ layout: default
 
         <div class="hero-flex">
           <div class="hero-photo-frame">
-            <img src="{{ '/assets/profile.jpg' | prepend: site.baseurl }}" alt="{{ site.name | default: site.title }}" class="hero-photo" />
+            <div
+              class="hero-photo"
+              role="img"
+              aria-label="{{ site.name | default: site.title }}"
+              style="background-image: url('{{ '/assets/profile.jpg' | prepend: site.baseurl }}');"
+            ></div>
           </div>
           <div class="hero-text">
             <h1 class="title">{{ site.title }}</h1>
