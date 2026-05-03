@@ -213,6 +213,112 @@ pre code {
   font-style: normal;
 }
 
+/* ----- Hero (home page front cover) ----- */
+.hero-flex {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  margin: 0 0 1.6rem;
+}
+.hero-text { min-width: 0; flex: 1 1 auto; }
+.hero-text .title { margin-bottom: 0.2em; }
+
+.hero-photo-frame {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  padding: 4px;
+  background:
+    linear-gradient(135deg, rgba($accent, 0.95), rgba($accent, 0.35) 55%, rgba($accent, 0.15));
+  box-shadow:
+    0 0 0 1px rgba($accent, 0.25),
+    0 12px 40px -12px rgba($accent, 0.45),
+    0 0 80px -20px rgba($accent, 0.35);
+}
+.hero-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: $bg-elev;
+}
+@media (max-width: 540px) {
+  .hero-flex { gap: 1rem; }
+  .hero-photo-frame { width: 88px; height: 88px; }
+  .site-header .title, .post-header .title { font-size: 1.45rem; }
+}
+
+/* Tech stack */
+.hero-stack {
+  margin-top: 1.4rem;
+}
+.hero-stack-label {
+  margin: 0 0 0.7rem;
+  color: $fg-muted;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.hero-stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 0.55rem;
+}
+
+.tech-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.85rem 0.5rem 0.7rem;
+  background: rgba($bg-elev, 0.55);
+  border: 1px solid $rule;
+  border-radius: 7px;
+  color: $fg-muted;
+  text-decoration: none !important;
+  border-bottom: 1px solid $rule !important;  /* override global anchor underline */
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, color 150ms ease;
+}
+.tech-tile:hover {
+  border-color: rgba($accent, 0.55) !important;
+  background: rgba($bg-elev, 0.95);
+  transform: translateY(-2px);
+  color: $fg;
+}
+.tech-icon {
+  display: block;
+  width: 26px;
+  height: 26px;
+  background-color: $fg-muted;
+  -webkit-mask: var(--icon-url) center / contain no-repeat;
+          mask: var(--icon-url) center / contain no-repeat;
+  transition: background-color 150ms ease;
+}
+.tech-tile:hover .tech-icon { background-color: $accent-hi; }
+.tech-icon-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-family: $font-mono;
+  font-size: 0.85rem;
+  color: $fg-muted;
+  letter-spacing: -0.05em;
+  transition: color 150ms ease;
+}
+.tech-tile:hover .tech-icon-text { color: $accent-hi; }
+.tech-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.2;
+}
+
 /* Slim accent diamond divider */
 .page-divider {
   display: block;

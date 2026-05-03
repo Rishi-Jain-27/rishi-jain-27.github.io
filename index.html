@@ -6,8 +6,91 @@ layout: default
   <div class="site-header-container">
     <div class="scrim">
       <header class="site-header">
-        <h1 class="title">{{ site.title }}</h1>
-        {% if site.subtitle %}<p class="subtitle">{{ site.subtitle }}</p>{% endif %}
+
+        <div class="hero-flex">
+          <div class="hero-photo-frame">
+            <img src="{{ '/assets/profile.jpg' | prepend: site.baseurl }}" alt="{{ site.name | default: site.title }}" class="hero-photo" />
+          </div>
+          <div class="hero-text">
+            <h1 class="title">{{ site.title }}</h1>
+            {% if site.subtitle %}<p class="subtitle">{{ site.subtitle }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="hero-stack" aria-label="Technical stack">
+          <p class="hero-stack-label">Tech stack</p>
+          <div class="hero-stack-grid">
+            <a class="tech-tile" href="https://docs.python.org/3/" target="_blank" rel="noopener noreferrer" title="Python documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/python');"></span>
+              <span class="tech-label">Python</span>
+            </a>
+            <a class="tech-tile" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener noreferrer" title="JavaScript documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/javascript');"></span>
+              <span class="tech-label">JavaScript</span>
+            </a>
+            <a class="tech-tile" href="https://docs.oracle.com/en/java/" target="_blank" rel="noopener noreferrer" title="Java documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/openjdk');"></span>
+              <span class="tech-label">Java</span>
+            </a>
+            <a class="tech-tile" href="https://www.postgresql.org/docs/current/sql.html" target="_blank" rel="noopener noreferrer" title="SQL documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/postgresql');"></span>
+              <span class="tech-label">SQL</span>
+            </a>
+            <a class="tech-tile" href="https://react.dev/" target="_blank" rel="noopener noreferrer" title="React documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/react');"></span>
+              <span class="tech-label">React</span>
+            </a>
+            <a class="tech-tile" href="https://flask.palletsprojects.com/" target="_blank" rel="noopener noreferrer" title="Flask documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/flask');"></span>
+              <span class="tech-label">Flask</span>
+            </a>
+            <a class="tech-tile" href="https://nodejs.org/docs/latest/api/" target="_blank" rel="noopener noreferrer" title="Node.js documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/nodedotjs');"></span>
+              <span class="tech-label">Node.js</span>
+            </a>
+            <a class="tech-tile" href="https://pytorch.org/docs/stable/index.html" target="_blank" rel="noopener noreferrer" title="PyTorch documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/pytorch');"></span>
+              <span class="tech-label">PyTorch</span>
+            </a>
+            <a class="tech-tile" href="https://fastapi.tiangolo.com/" target="_blank" rel="noopener noreferrer" title="FastAPI documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/fastapi');"></span>
+              <span class="tech-label">FastAPI</span>
+            </a>
+            <a class="tech-tile" href="https://www.postgresql.org/docs/" target="_blank" rel="noopener noreferrer" title="PostgreSQL documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/postgresql');"></span>
+              <span class="tech-label">PostgreSQL</span>
+            </a>
+            <a class="tech-tile" href="https://scikit-learn.org/stable/" target="_blank" rel="noopener noreferrer" title="scikit-learn documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/scikitlearn');"></span>
+              <span class="tech-label">scikit-learn</span>
+            </a>
+            <a class="tech-tile" href="https://render.com/docs" target="_blank" rel="noopener noreferrer" title="Render documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/render');"></span>
+              <span class="tech-label">Render</span>
+            </a>
+            <a class="tech-tile" href="https://developers.cloudflare.com/" target="_blank" rel="noopener noreferrer" title="Cloudflare documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/cloudflare');"></span>
+              <span class="tech-label">Cloudflare</span>
+            </a>
+            <a class="tech-tile" href="https://docs.github.com/" target="_blank" rel="noopener noreferrer" title="GitHub documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/github');"></span>
+              <span class="tech-label">GitHub</span>
+            </a>
+            <a class="tech-tile" href="https://vercel.com/docs" target="_blank" rel="noopener noreferrer" title="Vercel documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/vercel');"></span>
+              <span class="tech-label">Vercel</span>
+            </a>
+            <a class="tech-tile" href="https://upstash.com/docs" target="_blank" rel="noopener noreferrer" title="Upstash documentation">
+              <span class="tech-icon" style="--icon-url: url('https://cdn.simpleicons.org/upstash');"></span>
+              <span class="tech-label">Upstash</span>
+            </a>
+            <a class="tech-tile tech-tile--noicon" href="https://en.wikipedia.org/wiki/Cron" target="_blank" rel="noopener noreferrer" title="Cron documentation">
+              <span class="tech-icon-text" aria-hidden="true">{ }</span>
+              <span class="tech-label">CronJob</span>
+            </a>
+          </div>
+        </div>
+
       </header>
     </div>
   </div>
