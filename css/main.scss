@@ -3,11 +3,385 @@
 ---
 @charset "utf-8";
 
-// Import partials from `sass_dir` (defaults to `_sass`)
-// Includes Bourbon, Neat, and Bitters (thanks, thoughtbot!)
-@import
-  "bourbon/bourbon",
-  "base/base",
-  "neat/neat",
-  "layout"
-;
+/* ----- Theme tokens ----- */
+$bg:        #0b0b0d;
+$bg-elev:   #131318;
+$fg:        #e6e6ea;
+$fg-muted:  #8a8a93;
+$fg-dim:    #5a5a63;
+$rule:      #1f1f25;
+$accent:    #c9a36b;
+$accent-hi: #e0bd86;
+
+$content-width: 640px;
+$font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text",
+            "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+$font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo,
+            Consolas, "Liberation Mono", monospace;
+
+/* ----- Reset-ish ----- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: $bg;
+  color: $fg;
+  font-family: $font-sans;
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; height: auto; display: block; }
+
+a {
+  color: $accent;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+a:hover { color: $accent-hi; border-bottom-color: $accent-hi; }
+
+h1, h2, h3, h4, h5, h6 {
+  color: $fg;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 1.6em 0 0.6em;
+}
+h1 { font-size: 1.65rem; font-weight: 600; letter-spacing: -0.02em; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.05rem; }
+
+p { margin: 0 0 1em; }
+
+hr {
+  border: 0;
+  border-top: 1px solid $rule;
+  margin: 2.5em 0;
+}
+
+ul, ol { padding-left: 1.2em; }
+li { margin: 0.2em 0; }
+
+blockquote {
+  color: $fg-muted;
+  border-left: 2px solid $rule;
+  margin: 1.2em 0;
+  padding: 0.2em 0 0.2em 1em;
+  font-style: italic;
+}
+
+code {
+  font-family: $font-mono;
+  font-size: 0.88em;
+  background: $bg-elev;
+  border: 1px solid $rule;
+  border-radius: 3px;
+  padding: 0.05em 0.35em;
+}
+
+pre {
+  background: $bg-elev;
+  border: 1px solid $rule;
+  border-radius: 4px;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+::selection { background: rgba($accent, 0.25); color: $fg; }
+
+/* ----- Layout primitives ----- */
+.wrapper {
+  max-width: $content-width;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.page-content {
+  padding: 1rem 0 4rem;
+}
+
+/* ----- Header / Nav ----- */
+.navigation {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba($bg, 0.85);
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+  border-bottom: 1px solid $rule;
+}
+.navigation-wrapper {
+  max-width: $content-width;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.navigation .logo {
+  color: $fg;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  border: 0;
+}
+.navigation .logo:hover { color: $accent-hi; border: 0; }
+.navigation .logo img { display: none; }       /* slim: hide raster logo */
+.navigation .logo span { display: inline; }
+.navigation-menu-button { display: none; }      /* slim: ditch hamburger, links fit */
+
+.navigation nav { margin: 0; padding: 0; }
+.navigation ul.navigation-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 1.25rem;
+}
+.navigation li.nav-link a {
+  color: $fg-muted;
+  font-size: 0.9rem;
+  border: 0;
+}
+.navigation li.nav-link a:hover { color: $fg; }
+
+/* ----- Site / Post header (no cover image, slim) ----- */
+.site-header-container,
+.post-header-container {
+  text-align: left;
+  padding: 3rem 0 1rem;
+  border-bottom: 1px solid $rule;
+  margin-bottom: 2rem;
+  background: none !important;
+  text-shadow: none !important;
+  color: $fg;
+}
+.site-header-container .scrim,
+.post-header-container .scrim {
+  background: transparent !important;
+  padding: 0 !important;
+  max-width: $content-width;
+  margin: 0 auto;
+  padding: 0 1.25rem !important;
+}
+.site-header .title,
+.post-header .title {
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35em;
+}
+.site-header .subtitle,
+.post-header .info {
+  color: $fg-muted;
+  font-size: 0.95rem;
+  margin: 0;
+  font-style: normal;
+}
+
+/* The page divider is meaningless on dark — collapse it */
+.page-divider { display: none; }
+
+/* ----- Home: post list ----- */
+.post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.post-list > li {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid $rule;
+}
+.post-list > li:last-child { border-bottom: 0; }
+.post-list h2 {
+  margin: 0 0 0.4em;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.post-list .post-link {
+  color: $fg;
+  border: 0;
+}
+.post-list .post-link:hover { color: $accent-hi; }
+.post-list .post-excerpt p {
+  color: $fg-muted;
+  margin: 0 0 0.6em;
+  font-size: 0.95rem;
+}
+.post-list hr { display: none; }     /* borders on <li> handle separation */
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: $fg-dim;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.post-meta .post-date { text-align: left; }
+.post-meta .post-categories { text-align: right; }
+.post-meta a { color: $fg-muted; border: 0; }
+.post-meta a:hover { color: $accent-hi; }
+
+/* ----- Post layout ----- */
+.post .post-content {
+  padding: 1rem 0 0;
+  font-size: 1rem;
+}
+.post .post-content h2 { margin-top: 2.2em; }
+.post .post-content h3 { margin-top: 1.8em; }
+.post .post-content img {
+  margin: 1.5em auto;
+  border-radius: 4px;
+  border: 1px solid $rule;
+}
+.post .tags {
+  font-size: 0.85rem;
+  color: $fg-muted;
+  margin: 2rem 0 0;
+}
+
+/* Share row (kept minimal) */
+.post .share {
+  margin: 2rem 0 0;
+  font-size: 0.85rem;
+  color: $fg-muted;
+}
+.post .share a {
+  margin-left: 0.5rem;
+  color: $fg-muted;
+  border: 0;
+}
+.post .share a:hover { color: $accent-hi; }
+
+.post-navigation {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid $rule;
+  color: $fg-muted;
+}
+
+/* ----- Generic page ----- */
+.page .post-header {
+  text-align: left;
+  padding: 2.5rem 0 0.5rem;
+}
+.page .post-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.page .post-content { padding-top: 1.2rem; font-size: 1rem; }
+.page .profile {
+  max-width: 180px;
+  margin: 0 0 1.4em;
+  border-radius: 50%;
+  border: 1px solid $rule;
+}
+.page .posts-list {
+  list-style: none;
+  padding: 0;
+}
+.page .posts-list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid $rule;
+}
+.page .posts-list .post-date {
+  color: $fg-dim;
+  font-size: 0.85rem;
+  margin-left: 0.4rem;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 2.5rem;
+  text-align: center;
+  color: $fg-muted;
+  font-size: 0.9rem;
+}
+.pagination .page-number { padding: 0 0.75rem; }
+.pagination .fa-stack { display: none; }   /* nuke FontAwesome arrows we no longer load */
+
+/* ----- Footer ----- */
+.site-footer {
+  border-top: 1px solid $rule;
+  background: $bg;
+  color: $fg-muted;
+  padding: 2.5rem 0 3rem;
+  margin-top: 4rem;
+  font-size: 0.88rem;
+}
+.site-footer .wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 640px) {
+  .site-footer .wrapper {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.site-footer .footer-heading {
+  color: $fg;
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.site-footer p strong { color: $fg; font-weight: 500; }
+.site-footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.site-footer li { margin: 0.25rem 0; }
+.site-footer a {
+  color: $fg-muted;
+  border: 0;
+}
+.site-footer a:hover { color: $accent-hi; }
+.site-footer .social-media-list i { display: none; } /* FontAwesome dropped */
+.site-footer .site-signature .text { margin: 0; color: $fg-dim; }
+
+/* ----- Resume tweaks ----- */
+.page .post-content h2 {
+  font-size: 1.15rem;
+  margin-top: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid $rule;
+}
+.page .post-content h3 {
+  font-size: 1rem;
+  color: $fg;
+  margin-top: 1.6em;
+}
+.page .post-content strong { color: $fg; font-weight: 500; }
+
+/* ----- Mobile ----- */
+@media (max-width: 540px) {
+  body { font-size: 15.5px; }
+  .navigation-wrapper { padding: 0.6rem 1rem; }
+  .navigation ul.navigation-menu { gap: 0.9rem; }
+  .site-header .title, .post-header .title { font-size: 1.55rem; }
+  .post-meta { flex-direction: column; gap: 0.2rem; }
+  .post-meta .post-categories { text-align: left; }
+}
