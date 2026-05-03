@@ -4,14 +4,14 @@
 @charset "utf-8";
 
 /* ----- Theme tokens ----- */
-$bg:        #0b0b0d;
-$bg-elev:   #131318;
-$fg:        #e6e6ea;
-$fg-muted:  #8a8a93;
-$fg-dim:    #5a5a63;
-$rule:      #1f1f25;
-$accent:    #c9a36b;
-$accent-hi: #e0bd86;
+$bg:        #16171f;
+$bg-elev:   #1f2029;
+$fg:        #ececf2;
+$fg-muted:  #a0a0ad;
+$fg-dim:    #6c6d78;
+$rule:      #2a2b35;
+$accent:    #d4af7a;
+$accent-hi: #ebc999;
 
 $content-width: 640px;
 $font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text",
@@ -34,6 +34,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+body {
+  background:
+    radial-gradient(900px 480px at 50% -120px, rgba($accent, 0.10), transparent 65%),
+    radial-gradient(700px 400px at 90% 10%, rgba($accent, 0.04), transparent 70%),
+    $bg;
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 img { max-width: 100%; height: auto; display: block; }
@@ -162,13 +171,24 @@ pre code {
 /* ----- Site / Post header (no cover image, slim) ----- */
 .site-header-container,
 .post-header-container {
+  position: relative;
   text-align: left;
-  padding: 3rem 0 1rem;
+  padding: 3rem 0 1.4rem;
   border-bottom: 1px solid $rule;
   margin-bottom: 2rem;
   background: none !important;
   text-shadow: none !important;
   color: $fg;
+}
+.site-header-container::after,
+.post-header-container::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 1.25rem;
+  width: 64px;
+  height: 1px;
+  background: $accent;
 }
 .site-header-container .scrim,
 .post-header-container .scrim {
@@ -193,8 +213,23 @@ pre code {
   font-style: normal;
 }
 
-/* The page divider is meaningless on dark — collapse it */
-.page-divider { display: none; }
+/* Slim accent diamond divider */
+.page-divider {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 2rem 0 1.5rem;
+  line-height: 1;
+}
+.page-divider .one,
+.page-divider .two { display: none; }
+.page-divider::before {
+  content: '◆';
+  color: $accent;
+  font-size: 0.55rem;
+  letter-spacing: 0.5em;
+  opacity: 0.85;
+}
 
 /* ----- Home: post list ----- */
 .post-list {
@@ -361,6 +396,52 @@ pre code {
 .site-footer a:hover { color: $accent-hi; }
 .site-footer .social-media-list i { display: none; } /* FontAwesome dropped */
 .site-footer .site-signature .text { margin: 0; color: $fg-dim; }
+
+/* ----- Tech stack chips ----- */
+.tech-stack {
+  margin: 1.4em 0 0.4em;
+}
+.tech-stack-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.6rem 0;
+}
+.tech-stack-label {
+  flex: 0 0 auto;
+  min-width: 7.5em;
+  margin-right: 0.4rem;
+  color: $fg-muted;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.tech-chip {
+  display: inline-block;
+  padding: 0.22em 0.65em;
+  font-size: 0.82rem;
+  color: $fg;
+  background: $bg-elev;
+  border: 1px solid $rule;
+  border-radius: 4px;
+  font-family: $font-mono;
+  letter-spacing: 0.01em;
+  transition: border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+.tech-chip:hover {
+  border-color: $accent;
+  color: $accent-hi;
+  transform: translateY(-1px);
+}
+@media (max-width: 540px) {
+  .tech-stack-label {
+    flex-basis: 100%;
+    min-width: 0;
+    margin-bottom: 0.1rem;
+  }
+}
 
 /* ----- Resume tweaks ----- */
 .page .post-content h2 {

@@ -13,6 +13,44 @@ I'm a student developer driven by a curiosity for AI and machine learning. Wheth
 
 ---
 
+## Technical Skills
+
+<div class="tech-stack">
+  <div class="tech-stack-row">
+    <span class="tech-stack-label">Languages</span>
+    <span class="tech-chip">Python</span>
+    <span class="tech-chip">JavaScript</span>
+    <span class="tech-chip">Java</span>
+    <span class="tech-chip">SQL</span>
+  </div>
+  <div class="tech-stack-row">
+    <span class="tech-stack-label">Frameworks</span>
+    <span class="tech-chip">React</span>
+    <span class="tech-chip">Flask</span>
+    <span class="tech-chip">Node.js</span>
+    <span class="tech-chip">PyTorch</span>
+    <span class="tech-chip">FastAPI</span>
+  </div>
+  <div class="tech-stack-row">
+    <span class="tech-stack-label">Tools</span>
+    <span class="tech-chip">PostgreSQL</span>
+    <span class="tech-chip">scikit-learn</span>
+    <span class="tech-chip">Render</span>
+    <span class="tech-chip">Cloudflare</span>
+    <span class="tech-chip">GitHub</span>
+    <span class="tech-chip">Vercel</span>
+    <span class="tech-chip">Upstash</span>
+    <span class="tech-chip">CronJob</span>
+  </div>
+  <div class="tech-stack-row">
+    <span class="tech-stack-label">AI / ML</span>
+    <span class="tech-chip">PyTorch</span>
+    <span class="tech-chip">Machine Learning fundamentals (Helsinki / MinnaLearn, FreeCodeCamp)</span>
+  </div>
+</div>
+
+---
+
 ## Activities & Achievements
 
 ### Debate
