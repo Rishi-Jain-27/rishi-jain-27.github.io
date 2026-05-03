@@ -225,29 +225,27 @@ pre code {
 
 .hero-photo-frame {
   flex: 0 0 auto;
-  width: 112px;
-  height: 112px;
-  border-radius: 50%;
+  display: block;
   padding: 4px;
+  border-radius: 10px;
   background:
     linear-gradient(135deg, rgba($accent, 0.95), rgba($accent, 0.35) 55%, rgba($accent, 0.15));
   box-shadow:
     0 0 0 1px rgba($accent, 0.25),
     0 12px 40px -12px rgba($accent, 0.45),
     0 0 80px -20px rgba($accent, 0.35);
+  line-height: 0;
 }
 .hero-photo {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-size: 130% auto;
-  background-position: 60% 28%;
-  background-repeat: no-repeat;
-  background-color: $bg-elev;
+  display: block;
+  width: 160px;
+  height: auto;
+  border-radius: 7px;
+  background: $bg-elev;
 }
 @media (max-width: 540px) {
   .hero-flex { gap: 1rem; }
-  .hero-photo-frame { width: 88px; height: 88px; }
+  .hero-photo { width: 110px; }
   .site-header .title, .post-header .title { font-size: 1.45rem; }
 }
 
