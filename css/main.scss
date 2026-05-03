@@ -241,6 +241,7 @@ pre code {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  object-position: 50% 18%;
   display: block;
   background: $bg-elev;
 }
@@ -433,10 +434,14 @@ pre code {
 }
 .page .post-content { padding-top: 1.2rem; font-size: 1rem; }
 .page .profile {
-  max-width: 180px;
+  width: 180px;
+  height: 180px;
+  max-width: 100%;
   margin: 0 0 1.4em;
   border-radius: 50%;
   border: 1px solid $rule;
+  object-fit: cover;
+  object-position: 50% 18%;
 }
 .page .posts-list {
   list-style: none;
