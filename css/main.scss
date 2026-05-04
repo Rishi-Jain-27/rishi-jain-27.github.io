@@ -247,6 +247,25 @@ pre code {
   border-radius: 7px;
   background: $bg-elev;
 }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes hero-photo-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 0 1px rgba($accent, 0.25),
+        0 12px 40px -12px rgba($accent, 0.45),
+        0 0 80px -20px rgba($accent, 0.35);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px rgba($accent, 0.32),
+        0 14px 48px -10px rgba($accent, 0.55),
+        0 0 100px -14px rgba($accent, 0.55);
+    }
+  }
+  .hero-photo-frame {
+    animation: hero-photo-pulse 7s ease-in-out infinite;
+  }
+}
 @media (max-width: 540px) {
   .hero-flex { gap: 1rem; }
   .hero-photo { width: 110px; }
