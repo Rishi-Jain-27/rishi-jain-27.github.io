@@ -5,11 +5,20 @@ permalink: /resume/
 main_nav: true
 ---
 
-## Personal Statement
+**Rishi Jain**  
+27rishijainpersonalemail@gmail.com · 470-957-8890 · [rishi-jain-27.github.io](https://rishi-jain-27.github.io/) · College Park, GA
 
-I'm a student developer driven by a curiosity for AI and machine learning. Whether I'm leading the FlintAI club (a subset of the Technology club), competing in Science Olympiad, or coding, I love digging into complex problems. I also stay active in the debate community as a competitor, coach, and judge, which has helped me learn to communicate technical ideas to anyone. I wish to continue learning about AI in college to explore how we can use logic and tech to solve real-world problems.
+---
 
-**GPA:** 4.87 (Weighted)
+## Education
+
+**Woodward Academy**, College Park, GA — *Expected Graduation: May 2027*
+
+**GPA:** 4.87 (Weighted) · **SAT:** 1530
+
+National Honor Society (Randolph W. Thrower Chapter)
+
+**AP Coursework:** Computer Science Principles, Computer Science A, U.S. History, Chemistry, Calculus AB, Physics 1, Macroeconomics, English Language and Composition
 
 ---
 
@@ -21,7 +30,9 @@ I'm a student developer driven by a curiosity for AI and machine learning. Wheth
     <span class="tech-chip">Python</span>
     <span class="tech-chip">JavaScript</span>
     <span class="tech-chip">Java</span>
+    <span class="tech-chip">C++</span>
     <span class="tech-chip">SQL</span>
+    <span class="tech-chip">scikit-learn</span>
   </div>
   <div class="tech-stack-row">
     <span class="tech-stack-label">Frameworks</span>
@@ -29,12 +40,10 @@ I'm a student developer driven by a curiosity for AI and machine learning. Wheth
     <span class="tech-chip">Flask</span>
     <span class="tech-chip">Node.js</span>
     <span class="tech-chip">PyTorch</span>
-    <span class="tech-chip">FastAPI</span>
   </div>
   <div class="tech-stack-row">
     <span class="tech-stack-label">Tools</span>
     <span class="tech-chip">PostgreSQL</span>
-    <span class="tech-chip">scikit-learn</span>
     <span class="tech-chip">Render</span>
     <span class="tech-chip">Cloudflare</span>
     <span class="tech-chip">GitHub</span>
@@ -45,63 +54,136 @@ I'm a student developer driven by a curiosity for AI and machine learning. Wheth
   <div class="tech-stack-row">
     <span class="tech-stack-label">AI / ML</span>
     <span class="tech-chip">PyTorch</span>
+    <span class="tech-chip">RAG systems</span>
+    <span class="tech-chip">LLM integration</span>
+    <span class="tech-chip">Prompt injection mitigation</span>
     <span class="tech-chip">Machine Learning fundamentals (Helsinki / MinnaLearn, FreeCodeCamp)</span>
   </div>
 </div>
 
 ---
 
-## Activities & Achievements
+## Leadership
 
-### Debate
+### Student Leadership Council, National Speech &amp; Debate Association
+*Grade 12 · Current*
 
-- **Debate National Champion** — 1st Year National Policy Debate Champion (2023-2024 Fiscal Redistribution topic)
-- **Debate Varsity State Champion** — #1 policy debate team in Georgia; championed the GFCA Varsity State Championship after debating 12 hours straight for two days. Second time in history Woodward won First Year, Second Year, and Varsity State Championships in one year.
-- **#18th Ranked Debate Team Nationally** — Ranked by the Policy Debate Coaches Poll among all high school policy debate teams
-- **Debate National Runner-Up** — 2nd place at Woodward Second Year National Championships (Intellectual Property topic)
-- **Debate State Champion and #1 Speaker** — Co-champion of GFCA First Year State; Second Year GFCA Policy Debate State Champion and top speaker
-- **#1 Debater at TOC Digital Speech and Debate #2** — Top speaker among 154 debaters
-- **Varsity Debate Team Leader** — 1500+ pieces of evidence produced; 10% of team's total research output (2024-2025)
+- Elected to represent 140,000+ NSDA members nationwide through a highly selective process; collaborate directly with NSDA leadership to improve accessibility in speech and debate.
 
-### Leadership & Clubs
+### Policy Debate — Team Leader, Coach &amp; Judge, Woodward Academy
+*Grades 9–12 · Current*
 
-- **AI Club Leader** — Lead the AI Club, a subset of the Technology Club, helping students become Flint AI ambassadors and expand their knowledge of AI in education
-- **Flint AI Representative** — Selected through rolling application; writing guest blog post on FlintAI as a draft reviewer
-- **Math Team Captain** — Captain of the competitive Math Team; mentored underclassmen on advanced math concepts
+- Coached two teams to First and Second Year State Champion and Runner-Up at GFCA State Championships.
+- Coached one team to First Year National Champion and Best Speaker at National Championships.
+- Produced 10% of Woodward Varsity's total research output (1,500+ evidence cards) in 2024–2025, anchoring the team's competitive preparation across Fiscal Redistribution, IP, and Arctic Development topics.
+- Led team to national championships, state championships, and national circuit tournaments across four years.
 
-### Academics & Honors
+### FlintAI Club — Founder &amp; President, Woodward Academy
+*Grade 11 · Current*
 
-- **National Recognition Program Awardee** — Awarded by CollegeBoard for outstanding academic achievement
-- **Nominee for Governor's Honors Program** — Nominated by the Math Department
-- **Gold Eagle** — GPA of 3.80+ (Freshman through Junior year)
+- Founded and lead the school's AI Club, a subset of the Technology Club, training students to use FlintAI (the school's official AI tool) to navigate academic challenges without shortcuts.
+- Developed curriculum emphasizing responsible, educational AI use across homework, studying, and time management.
 
-### Science & Competitions
+### Math Team Captain, Woodward Academy
+*Grades 11–12 · Current*
 
-- **Science Olympiad** — Earned 4th place in Machines (physics/Newtonian mechanics); only team member to place in the event
-- **Wharton Investment Challenge** — Competed in long-term investment economics challenge
-- **Quiz Bowl** — Active participant across Freshman through Junior year
+- Collaborated with other captains to lead a competitive team through local and national mathematics competitions; coordinate practice, develop strategy, and mentor teammates in algebra, combinatorics, and number theory.
 
-### Arts & Culture
+### Peer Leader, Woodward Academy
+*Grade 12 · Current*
 
-- **String Machine Orchestra Member** — Played viola in the highest-level orchestra (performs without a conductor); one of two freshmen selected
-- **Model UN** — Participated in national General Assembly tournaments
-- **South Asian Affinity Club** — Connected with peers to celebrate South Asian culture and identity
-- **Legal Studies Club** — Explored criminal, intellectual property, and antitrust law
+- Selected to guide incoming freshmen through the transition to Upper School, fostering community and personal growth across 18 weeks of structured peer mentorship.
 
 ---
 
-## Community Service
+## Scholarship
 
-- **Volunteer Debate Coach and Judge** — Coached a team to success at the Middle School Tournament of Champions (national level); coached two teams to champion and runner-up at GFCA Second Year State Championships
-- **Volunteer for Local Debate Programs** — Judged middle school debates for the Atlanta Urban Debate League (AUDL) and provided detailed feedback
-- **Tutoring** — Tutored sophomores and freshmen in Algebra, Geometry, and Chemistry through the PeerKonnect program
+### University of Michigan Debate Fellowship
+*Grade 12*
+
+- Selected as one of 12 nationwide recipients of a full-tuition fellowship to the University of Michigan Seven-Week Seniors Lab, recognizing top achievement in research, analytical reasoning, and persuasive argumentation.
+
+### Policy Debate Awards
+
+- **Varsity Policy Debate Georgia State Champion** (Grade 11) — #1 policy debate team in Georgia; second time in history Woodward won First Year, Second Year, and Varsity titles in a single year.
+- **National Ranking: #18** nationally among all high school policy debate teams (Coaches Poll, Grade 11)
+- **First Year National Champion** — Won 9 consecutive debates; unanimous 3-0 final round decision (Grade 9)
+- **Second Year National Runner-Up** — Won 7 rounds against top national teams (Grade 10)
+- **Second Year Georgia State Co-Champion &amp; Top Speaker** (Grade 10)
+- **First Year Georgia State Co-Champion** (Grade 9)
+- **Tournament of Champions:** 4 Bids accumulated (Grade 11)
+
+### Technical Projects &amp; AI / ML
+
+- Built a hybrid rules-based + LLM retrieval-augmented generation (RAG) system solo in 24 hours at HackerRank Orchestrate 2026; classifies user input, retrieves relevant chunks from a support corpus, and generates grounded responses while mitigating prompt injection and hallucination.
+- Authored an ongoing technical blog documenting AI project development, design decisions, and lessons learned across machine learning and full-stack development; published on personal website.
+- Built **DebateSearch**, a full-stack web app that surfaces hidden debate round videos and integrates AI-powered recommendations to improve accessibility for debate students.
+- Built **hwagent.org**, a full-stack student dashboard aggregating assignments and assessments, with a secure PostgreSQL login system deployed via Render and Cloudflare.
+- Self-studied **PyTorch**, a leading deep learning framework used in AI research and industry.
+- Completed **Building AI** (University of Helsinki / MinnaLearn) and supplementary AI coursework (FreeCodeCamp): machine learning, optimization, probability, and neural networks with a real-world final project.
+
+### Science Olympiad, Woodward Academy
+*Grades 9–12 · Current*
+
+- 4th Place, Machines event — University of Georgia Invitational (Grade 11); designed a dual-lever mechanical device and excelled in technical examination on simple machines.
+- Developed key chemistry and cryptography resources that contributed to team's state championship qualification.
+
+### Quiz Bowl, Woodward Academy
+*Grades 9–12 · Current*
+
+- Four-year member of a team that reached the national championship; rapid recall across history, science, literature, mathematics, arts, and current events.
+
+### Honors &amp; Recognition
+
+- **Gold Eagle Honor** (4 years) — awarded for maintaining a cumulative GPA of 3.80+ at Woodward Academy
+- **National Recognition Program, CollegeBoard** (Grade 11)
+- **NSDA Academic All American** — Awarded to 33 students in Woodward history (Grade 12)
+- **NSDA Outstanding Distinction** — 1,255+ points for participation, judging, and coaching (Grade 11)
+- **Arduino Certification in Electronics &amp; Physical Computing** — passed formal 36-question assessment (April 2026)
 
 ---
 
-## Other Experience
+## Moral Force of Character
 
-- **Page for the Office of the Lieutenant Governor** — Served during the 2026 Legislative Session of the Georgia General Assembly; observed floor votes and assisted legislators
+### Debate Judge &amp; Coach — Atlanta Urban Debate League (AUDL)
+*Grades 9–12 · Current*
+
+- Volunteered to judge middle school debates for the AUDL, providing detailed, constructive feedback to develop argumentation and critical thinking in underserved student communities.
+- Judged and coached at the Middle School Tournament of Champions — one of the most competitive middle school tournaments nationally — despite most experienced judges declining these rounds.
+- Coached teams to champion and runner-up finishes at GFCA Second Year State Championships.
+- Coached one team to First and Second Year National Champion and Best Speaker at National Championships.
+
+### FlintAI Student Representative
+*Grade 11 · Current*
+
+- Passed a competitive rolling application to represent FlintAI, advocating for responsible AI in education; authored a guest blog post on AI as a draft reviewer for student writing.
+- Worked directly with CEO Sohan Choudhury to provide product feedback that was implemented in FlintAI's token usage and whiteboard interaction systems.
+
+### Legislative Page — Office of the Lieutenant Governor of Georgia
+*Grade 11*
+
+- Served Lt. Governor Burt Jones, observing floor votes, relaying stakeholder communications, and gaining direct exposure to the legislative process and policy debates affecting Georgia communities.
+
+### PeerKonnect Tutor
+*Grade 11*
+
+- Provided personalized academic support through a peer tutoring platform; helped students improve grades by a full letter grade and fostered a stronger sense of school community.
+
+### South Asian Affinity Club
+*Grades 9–12 · Current*
+
+- Four-year member; organized cultural events celebrating South Asian heritage and promoting cross-cultural understanding within the school community.
 
 ---
 
-*Email: 27rjain@woodward.edu*
+## Physical Vigor
+
+### Daily Strength &amp; Conditioning Training
+*Current*
+
+- Committed to a daily workout regimen, maintaining physical discipline alongside a demanding academic and competitive schedule; views consistent physical training as foundational to focus, resilience, and peak performance.
+
+### Pickup Football — University of Michigan Debate Camp
+*Summer (Pre-Fellowship)*
+
+- Competed in pickup football games with peers during an intensive seven-week national debate camp, demonstrating athletic initiative and competitive drive even within a rigorous academic environment away from home.
