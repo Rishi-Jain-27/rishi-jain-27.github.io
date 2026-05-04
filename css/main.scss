@@ -296,12 +296,12 @@ pre code {
   display: block;
   width: 26px;
   height: 26px;
-  background-color: $fg-muted;
+  background-color: var(--icon-color, #{$fg-muted});
   -webkit-mask: var(--icon-url) center / contain no-repeat;
           mask: var(--icon-url) center / contain no-repeat;
-  transition: background-color 150ms ease;
+  transition: filter 150ms ease;
 }
-.tech-tile:hover .tech-icon { background-color: $accent-hi; }
+.tech-tile:hover .tech-icon { filter: brightness(1.15); }
 .tech-icon-text {
   display: inline-flex;
   align-items: center;
