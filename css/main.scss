@@ -347,10 +347,26 @@ pre code {
   padding: 0;
 }
 .post-list > li {
+  position: relative;
   padding: 1.5rem 0;
   border-bottom: 1px solid $rule;
+  transition: padding-left 220ms ease;
 }
 .post-list > li:last-child { border-bottom: 0; }
+.post-list > li::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background: $accent;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 240ms ease;
+}
+.post-list > li:hover { padding-left: 0.7rem; }
+.post-list > li:hover::before { transform: scaleY(1); }
 .post-list h2 {
   margin: 0 0 0.4em;
   font-size: 1.15rem;
@@ -563,7 +579,7 @@ pre code {
   .js-reveal .post .post-content > h2 {
     opacity: 0;
     transform: translateY(12px);
-    transition: opacity 600ms ease, transform 600ms ease;
+    transition: opacity 600ms ease, transform 600ms ease, padding-left 220ms ease;
   }
   .js-reveal .post-list > li.is-visible,
   .js-reveal .page .post-content > h2.is-visible,
