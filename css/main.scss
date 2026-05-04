@@ -403,6 +403,40 @@ pre code {
 }
 .post-list hr { display: none; }     /* borders on <li> handle separation */
 
+/* ----- Project button (inline next to post titles) ----- */
+.project-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  margin-left: 0.6rem;
+  padding: 0.15em 0.55em;
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $accent;
+  background: rgba($accent, 0.08);
+  border: 1px solid rgba($accent, 0.35) !important;
+  border-radius: 999px;
+  vertical-align: 0.18em;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.project-button:hover {
+  color: $bg;
+  background: $accent-hi;
+  border-color: $accent-hi !important;
+  transform: translateY(-1px);
+}
+.project-button-arrow {
+  font-size: 0.85em;
+  transition: transform 160ms ease;
+}
+.project-button:hover .project-button-arrow {
+  transform: translate(1px, -1px);
+}
+
 .post-meta {
   display: flex;
   justify-content: space-between;

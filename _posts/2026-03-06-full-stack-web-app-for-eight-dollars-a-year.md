@@ -4,6 +4,8 @@ title: "Building a Full-Stack Web App With AI and PostgreSQL — For $8/Year"
 author: "Rishi Jain"
 date: 2026-03-06
 categories: projects
+project_url: https://hwagent.org
+project_label: Visit
 ---
 
 I recently built a full-stack, web-based application backed by PostgreSQL with AI-powered features — and the total hosting cost comes out to just **$8 a year**. Check it out at [hwagent.org](https://hwagent.org).

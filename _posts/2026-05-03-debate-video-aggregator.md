@@ -4,9 +4,11 @@ title: "Aggregating Every Debate Round on YouTube — and Letting AI Recommend t
 author: "Rishi Jain"
 date: 2026-05-03
 categories: projects
+project_url: https://debate-search.com
+project_label: Visit
 ---
 
-Debate is one of those activities where the learning curve is brutal if you don't have access to good rounds to watch. Coaches will tell you to "watch more rounds," but the rounds are scattered across hundreds of YouTube channels — camp uploads, tournament archives, individual debater playlists — with no central place to find them and no real way to know which ones are actually worth your two hours. So I built one.
+Debate is one of those activities where the learning curve is brutal if you don't have access to good rounds to watch. Coaches will tell you to "watch more rounds," but the rounds are scattered across hundreds of YouTube channels — camp uploads, tournament archives, individual debater playlists — with no central place to find them and no real way to know which ones are actually worth your two hours. So I built one — live at [debate-search.com](https://debate-search.com).
 
 ## What It Does
 

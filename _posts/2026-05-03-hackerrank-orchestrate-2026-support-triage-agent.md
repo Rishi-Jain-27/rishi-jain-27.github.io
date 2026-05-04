@@ -4,9 +4,11 @@ title: "HackerRank Orchestrate 2026: Building a Support Triage Agent That Doesn'
 author: "Rishi Jain"
 date: 2026-05-03 12:00:00 -0500
 categories: projects
+project_url: https://github.com/Rishi-Jain-27/hackerrank-orchestrate-2026
+project_label: Code
 ---
 
-I competed in the **HackerRank Orchestrate 2026 Hackathon** and built a **conservative, RAG-based support triage agent**. It reads incoming support tickets, retrieves relevant Markdown documentation from the provided corpus, classifies the issue type and product area, and decides whether to answer or escalate.
+I competed in the **HackerRank Orchestrate 2026 Hackathon** and built a **conservative, RAG-based support triage agent**. It reads incoming support tickets, retrieves relevant Markdown documentation from the provided corpus, classifies the issue type and product area, and decides whether to answer or escalate. Code is on [GitHub](https://github.com/Rishi-Jain-27/hackerrank-orchestrate-2026).
 
 The headline design choice: I deliberately did *not* let the LLM make routing decisions.
 
