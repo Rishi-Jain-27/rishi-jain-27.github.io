@@ -556,6 +556,25 @@ pre code {
   }
 }
 
+/* ----- Mono section markers on h2 (resume, pages, posts) ----- */
+.page .post-content,
+.post .post-content {
+  counter-reset: section-num;
+}
+.page .post-content h2,
+.post .post-content h2 {
+  counter-increment: section-num;
+}
+.page .post-content h2::before,
+.post .post-content h2::before {
+  content: "// " counter(section-num, decimal-leading-zero) "  ";
+  font-family: $font-mono;
+  font-size: 0.7em;
+  font-weight: 400;
+  color: $fg-dim;
+  letter-spacing: 0.05em;
+}
+
 /* ----- Resume tweaks ----- */
 .page .post-content h2 {
   font-size: 1.15rem;
