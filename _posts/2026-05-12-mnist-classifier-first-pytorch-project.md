@@ -29,7 +29,7 @@ Before writing one "real" model, I wanted a baseline I could trust. So I trained
 
 Once the bake-off told me where to invest, I built a deeper version — `MNISTClassifier`:
 
-- Two convolutional blocks (`Conv2d → GELU → MaxPool2d`, repeated).
+- Two convolutional blocks (`Conv2d → BatchNorm2d → GELU → MaxPool2d`, repeated).
 - A classifier head with `Dropout(0.25)` and `Linear → GELU → Linear`.
 - Trained 30 epochs with `SGD(lr=0.001, momentum=0.9, weight_decay=1e-4)`.
 - The checkpoint that gets saved is automatically the one with the best test accuracy *across the entire run* — not the one from the last epoch.
