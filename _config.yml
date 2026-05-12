@@ -6,6 +6,8 @@ plugins:
 
 exclude:
   - "/vendor/"
+  - "source-material/"
+  - "CLAUDE.md"
 
 # Site settings
 title: Rishi Jain
