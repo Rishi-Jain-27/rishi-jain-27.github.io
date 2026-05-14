@@ -77,7 +77,7 @@ index.html              home: hero (photo + title + tech grid) + paginated post 
 posts.md                /posts/ — posts grouped by category
 resume.md               /resume/ — long markdown resume
 about.md                /about/ — short bio
-assets/                 profile.jpg, header_image.jpg, logo.png, /icons/ favicons
+assets/                 profile-hero.png, header_image.jpg, logo.png, /icons/ favicons
 feed.xml                RSS
 Gemfile / Gemfile.lock  github-pages gem
 ```
