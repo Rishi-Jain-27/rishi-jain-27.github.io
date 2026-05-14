@@ -657,11 +657,11 @@ pre code {
 }
 .page .post-content h2::before,
 .post .post-content h2::before {
-  content: "// " counter(section-num, decimal-leading-zero) "  ";
+  content: "◆ " counter(section-num, decimal-leading-zero) "  ";
   font-family: $font-mono;
-  font-size: 0.7em;
+  font-size: 0.75em;
   font-weight: 400;
-  color: $fg-dim;
+  color: $accent;
   letter-spacing: 0.05em;
 }
 
