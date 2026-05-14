@@ -24,12 +24,12 @@ Motion appetite: **add more, tastefully.** Existing motion (scroll-reveal fade-u
 ### Theme tokens (defined in [css/main.scss](css/main.scss))
 
 ```
-$bg        #16171f   near-black
-$bg-elev   #1f2029   one step up (cards, code, chips)
-$fg        #ececf2   primary text
-$fg-muted  #a0a0ad   secondary text
-$fg-dim    #6c6d78   tertiary (dates, meta)
-$rule      #2a2b35   borders / dividers
+$bg        #1e1f2a   dark navy-charcoal
+$bg-elev   #292a36   one step up (cards, code, chips)
+$fg        #f0f0f5   primary text
+$fg-muted  #adadba   secondary text
+$fg-dim    #797a85   tertiary (dates, meta)
+$rule      #363745   borders / dividers
 $accent    #d4af7a   warm gold — THE color
 $accent-hi #ebc999   hover/lifted accent
 ```
