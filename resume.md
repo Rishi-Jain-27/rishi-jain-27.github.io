@@ -115,7 +115,7 @@ National Honor Society (Randolph W. Thrower Chapter)
 
 ### Technical Projects &amp; AI / ML
 
-- Built a hybrid rules-based + LLM retrieval-augmented generation (RAG) system solo in 24 hours at HackerRank Orchestrate 2026; classifies user input, retrieves relevant chunks from a support corpus, and generates grounded responses while mitigating prompt injection and hallucination.
+- Built a hybrid rules-based + LLM retrieval-augmented generation (RAG) system solo in 24 hours at HackerRank Orchestrate 2026; classifies user input, retrieves relevant chunks from a support corpus, and generates grounded responses while mitigating prompt injection and hallucination. Placed **#298 of 1,349** experienced AI engineers and undergraduate competitors.
 - Authored an ongoing technical blog documenting AI project development, design decisions, and lessons learned across machine learning and full-stack development; published on personal website.
 - Built **DebateSearch**, a full-stack web app that surfaces hidden debate round videos and integrates AI-powered recommendations to improve accessibility for debate students.
 - Built **hwagent.org**, a full-stack student dashboard aggregating assignments and assessments, with a secure PostgreSQL login system deployed via Render and Cloudflare.
@@ -151,7 +151,7 @@ National Honor Society (Randolph W. Thrower Chapter)
 - Volunteered to judge middle school debates for the AUDL, providing detailed, constructive feedback to develop argumentation and critical thinking in underserved student communities.
 - Judged and coached at the Middle School Tournament of Champions — one of the most competitive middle school tournaments nationally — despite most experienced judges declining these rounds.
 - Coached teams to champion and runner-up finishes at GFCA Second Year State Championships.
-- Coached one team to First and Second Year National Champion and Best Speaker at National Championships.
+- Coached a team to win the First Year National Championship and earn the Top Speaker award.
 
 ### FlintAI Student Representative
 *Grade 11 · Current*
