@@ -30,7 +30,8 @@ kramdown:
   # MathJax v3 is loaded in _includes/head.html when a page sets `math: true`.
   # Disable kramdown's built-in math handling so it leaves \( \) and \[ \]
   # delimiters alone for MathJax to process.
-  math_engine:
+  math_engine: null
+
 inter_post_navigation: false
 highlightjs_theme: "monokai-sublime"
 
