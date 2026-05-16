@@ -679,6 +679,18 @@ pre code {
 }
 .page .post-content strong { color: $fg; font-weight: 500; }
 
+/* ----- MathJax ----- */
+/* Display equations: allow horizontal scroll if a long line overflows the
+   640px content column, instead of blowing out the layout. */
+mjx-container[display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  margin: 1.1em 0;
+  padding: 0.2em 0;
+}
+mjx-container { color: $fg; }
+
 /* ----- Mobile ----- */
 @media (max-width: 540px) {
   body { font-size: 15.5px; }

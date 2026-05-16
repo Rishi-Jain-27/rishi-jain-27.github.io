@@ -101,6 +101,7 @@ date: 2026-05-03
 categories: projects        # used on /posts/ grouping
 project_url: https://example.com    # optional — adds inline pill
 project_label: "Visit"               # optional, defaults to "Open"
+math: true                           # optional — loads MathJax for LaTeX (see "Math" below)
 ---
 ```
 
@@ -116,8 +117,9 @@ The published posts have a consistent voice. Match it.
 - **Self-aware about clichés.** Posts often name the conventional wisdom they're pushing against ("tutorials are a trap", "always start with transfer learning", "MNIST is solved") and answer it.
 - **Specific over abstract.** Name hyperparameters, file paths, gem/library versions, exact accuracy numbers. Concrete details > general principles.
 - **Honest about failures.** "I did not internalize it." / "I was surprised for about an afternoon, and then it made sense." First-person, mildly self-deprecating, never preachy or didactic.
+- **Math and technical depth are welcome — and expected on technical topics.** The personal-narrative voice is the texture, not the substance. If a post is about a technical subject (an algorithm, an architecture, a derivation), it should actually *do* the technical work — write the equation, derive the gradient, work the concrete example, name the algorithm with a precise enough description that a reader could reimplement it. Trials/struggles are welcome alongside, not as a substitute. When in doubt, lean technical.
 - **End with a short `## Takeaway`** (or `## What's Next` for project posts with a roadmap). Two or three sentences. Not a summary — a final claim.
-- **Post length:** ~600–1000 words. If you're heading past 1200, cut.
+- **Post length:** narrative-only posts target ~600–1000 words (cut past 1200). Technical posts with derivations or math can run longer — up to ~2000 words is fine if the math earns it. Cut filler, never cut the math.
 - No emojis. No "I hope this helps." No advice paragraphs aimed at the reader.
 
 ### Adding a nav page
@@ -134,6 +136,22 @@ main_nav: true     # this is what puts it in the nav
 ```
 
 `main_nav: true` is the magic — [_includes/nav_links.html](_includes/nav_links.html) iterates `site.pages` and only includes pages with this flag.
+
+### Math (LaTeX via MathJax)
+
+The site loads MathJax v3 from a CDN, **opt-in per page** via `math: true` in frontmatter. Pages without that flag don't fetch MathJax at all.
+
+- **Inline math:** `\( ... \)` — e.g. `\( h_t = f(W h_{t-1} + U x_t) \)`.
+- **Display math:** `\[ ... \]` on its own line(s) — e.g.:
+  ```
+  \[
+  \frac{\partial L}{\partial W} = \sum_{t=1}^{T} \frac{\partial L_t}{\partial W}
+  \]
+  ```
+- **Do not use `$ ... $` for inline** (collides with currency in prose) and **do not use `$$ ... $$`** (kramdown's math handling is disabled in [_config.yml](_config.yml), but `\[ \]` is the convention here regardless).
+- MathJax is configured to skip `pre` and `code` blocks, so backtick code samples render literally — useful for showing the LaTeX source itself.
+- Equation numbering is off (`tags: 'none'`). If a future post needs numbered equations, flip that in [_includes/head.html](_includes/head.html).
+- Display equations get a horizontal scrollbar on overflow rather than blowing past the 640px content column — see the `mjx-container[display="true"]` rule in [css/main.scss](css/main.scss).
 
 ### Scroll-reveal targets
 
