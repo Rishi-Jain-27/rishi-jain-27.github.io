@@ -106,6 +106,20 @@ project_label: "Visit"               # optional, defaults to "Open"
 
 Body is kramdown. Use `## Section` for top-level sections (will auto-get `// 01`, `// 02` markers). Use `**bold**` sparingly — bold gets `$fg` (brighter) so it pops in the muted body text.
 
+#### Writing voice (read the existing posts before drafting a new one)
+
+The published posts have a consistent voice. Match it.
+
+- **Title:** strong noun-phrase + em-dash subtitle that names a thesis or paradox. Often inverts a cliché. ("MNIST Was the Excuse — Learning to Run Real Experiments in PyTorch", "FER2013 — When Transfer Learning Loses to a Smaller Model".) Avoid generic "Building X" / "How I Built X" titles.
+- **Open with the thesis or the surprising result**, not setup or background. The first paragraph also tends to drop the GitHub link and any cross-references to related posts.
+- **Section headings are noun phrases that make a claim**, not generic labels. "Why the Bigger Model Lost" beats "Results"; "The Three Things That Go Wrong" beats "Common Errors".
+- **Self-aware about clichés.** Posts often name the conventional wisdom they're pushing against ("tutorials are a trap", "always start with transfer learning", "MNIST is solved") and answer it.
+- **Specific over abstract.** Name hyperparameters, file paths, gem/library versions, exact accuracy numbers. Concrete details > general principles.
+- **Honest about failures.** "I did not internalize it." / "I was surprised for about an afternoon, and then it made sense." First-person, mildly self-deprecating, never preachy or didactic.
+- **End with a short `## Takeaway`** (or `## What's Next` for project posts with a roadmap). Two or three sentences. Not a summary — a final claim.
+- **Post length:** ~600–1000 words. If you're heading past 1200, cut.
+- No emojis. No "I hope this helps." No advice paragraphs aimed at the reader.
+
 ### Adding a nav page
 
 Add a top-level `.md` (like [about.md](about.md), [posts.md](posts.md), [resume.md](resume.md)) with:
@@ -162,6 +176,8 @@ bundle exec jekyll serve
 ```
 
 `_site/` is the build output. It's tracked but should not be hand-edited (Jekyll regenerates it).
+
+**Heads up — local preview is currently not working on this machine** (as of 2026-05-16). The `github-pages` gem pins old C-extension deps (`eventmachine`, `posix-spawn`, `yajl-ruby`) that won't compile against macOS Tahoe's toolchain on Ruby 3.3 or 4.0 without manual SDKROOT/openssl flag wrangling. Don't yak-shave on it — the user has accepted skipping local preview and relying on GitHub Pages' own build for visual verification. If they ask for local preview in a future session, treat it as a proper setup task and surface the cost-benefit before grinding through compile errors.
 
 ## Commit style
 
