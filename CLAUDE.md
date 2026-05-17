@@ -141,14 +141,15 @@ main_nav: true     # this is what puts it in the nav
 
 The site loads MathJax v3 from a CDN, **opt-in per page** via `math: true` in frontmatter. Pages without that flag don't fetch MathJax at all.
 
-- **Inline math:** `\( ... \)` — e.g. `\( h_t = f(W h_{t-1} + U x_t) \)`.
-- **Display math:** `\[ ... \]` on its own line(s) — e.g.:
+- **Inline math:** `\\( ... \\)` — e.g. `\\( h_t = f(W h_{t-1} + U x_t) \\)`. The doubled backslashes are required: kramdown's backslash-escape list includes `( ) [ ] | ! { }`, so a single-backslash `\(` gets stripped to a bare `(` before MathJax can see it. `\\(` in source becomes `\(` in HTML, which is what MathJax matches against.
+- **Display math:** `\\[ ... \\]` on its own line(s) — e.g.:
   ```
-  \[
+  \\[
   \frac{\partial L}{\partial W} = \sum_{t=1}^{T} \frac{\partial L_t}{\partial W}
-  \]
+  \\]
   ```
-- **Do not use `$ ... $` for inline** (collides with currency in prose) and **do not use `$$ ... $$`** (kramdown's math handling is disabled in [_config.yml](_config.yml), but `\[ \]` is the convention here regardless).
+- **Inside the math**, only the *delimiter* backslashes need doubling. LaTeX commands like `\frac`, `\partial`, `\sum`, `\delta`, `\,`, `\qquad` are safe as single-backslash because the character that follows isn't in kramdown's escape list. The ones to watch for and double inside math are `\(`, `\)`, `\[`, `\]`, `\{`, `\}`, `\|`, `\!`, `\_`, `\#`, `\*`, `\-`, `\+`, `\.`, `\~`, `\=`, `\"`, `\'`, `\<`, `\>`, `\` `` ` ``.
+- **Do not use `$ ... $` for inline** (collides with currency in prose) and **do not use `$$ ... $$`** (kramdown's math handling is disabled in [_config.yml](_config.yml), but `\\[ \\]` is the convention here regardless).
 - MathJax is configured to skip `pre` and `code` blocks, so backtick code samples render literally — useful for showing the LaTeX source itself.
 - Equation numbering is off (`tags: 'none'`). If a future post needs numbered equations, flip that in [_includes/head.html](_includes/head.html).
 - Display equations get a horizontal scrollbar on overflow rather than blowing past the 640px content column — see the `mjx-container[display="true"]` rule in [css/main.scss](css/main.scss).
