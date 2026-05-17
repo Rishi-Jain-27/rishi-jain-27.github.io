@@ -34,7 +34,7 @@ z_t = W h_{t-1} + U x_t + b, \qquad h_t = f(z_t),
 \\]
 
 \\[
-y_t = V h_t, \qquad L_t = \ell(y_t, \text{target}_t), \qquad L = \sum_{t=1}^{T} L_t.
+y_t = V h_t, \qquad L_t = \ell(y_t, \text{target}\_t), \qquad L = \sum_{t=1}^{T} L_t.
 \\]
 
 (For many-to-one classification — like the MNIST-as-sequence model in the companion post — only \\( L_T \\) is non-zero. The sum collapses to a single term, but the math below doesn't change.)
@@ -106,7 +106,7 @@ The bound becomes much more visceral with numbers. Take \\( f = \tanh \\), so \\
 Suppose the recurrent weight matrix has \\( \sigma_1(W) = 0.9 \\). The per-step Jacobian norm is bounded by
 
 \\[
-\left\\| \mathrm{diag}(f'(z_i)) \right\\| \cdot \left\\| W \right\\| \le \underbrace{0.5}_{\text{typical } f'} \cdot \underbrace{0.9}_{\sigma_1(W)} = 0.45.
+\left\\| \mathrm{diag}(f'(z_i)) \right\\| \cdot \left\\| W \right\\| \le \underbrace{0.5}\_{\text{typical } f'} \cdot \underbrace{0.9}\_{\sigma_1(W)} = 0.45.
 \\]
 
 After unrolling 100 steps,
