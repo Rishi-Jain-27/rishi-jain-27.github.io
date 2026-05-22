@@ -52,25 +52,105 @@
     (function () {
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       if (!('IntersectionObserver' in window)) return;
-      document.documentElement.classList.add('js-reveal');
-      function init() {
-        var targets = document.querySelectorAll('.post-list > li, .page .post-content > h2, .post .post-content > h2');
+
+      var root = document.documentElement;
+
+      function ready(fn) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fn);
+        } else {
+          fn();
+        }
+      }
+
+      /* ---- Dependency-free reveal for in-article h2 section markers ---- */
+      root.classList.add('js-reveal');
+      ready(function () {
+        var targets = document.querySelectorAll('.page .post-content > h2, .post .post-content > h2');
         if (!targets.length) return;
-        var observer = new IntersectionObserver(function (entries) {
+        var io = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) {
               entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
+              io.unobserve(entry.target);
             }
           });
         }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
-        targets.forEach(function (el) { observer.observe(el); });
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-      } else {
-        init();
-      }
+        targets.forEach(function (el) { io.observe(el); });
+      });
+
+      /* ---- Spring-based entrance choreography via Motion (motion.dev) ----
+         Elements start hidden via the .js-motion CSS rules (no flash); Motion
+         then springs them in. If the CDN module can't be reached, the fallback
+         drops .js-motion and everything reverts to its visible resting state. */
+      root.classList.add('js-motion');
+      var revealed = false;
+      var fallback = setTimeout(function () {
+        revealed = true;
+        root.classList.remove('js-motion');
+      }, 2500);
+
+      import('https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm').then(function (Motion) {
+        clearTimeout(fallback);
+        if (revealed) return;
+        var animate = Motion.animate, stagger = Motion.stagger, inView = Motion.inView;
+        var ease = [0.16, 1, 0.3, 1];
+
+        ready(function () {
+          /* 1. Page-load transition: the content column rises + fades in. */
+          animate('.page-content', { opacity: [0, 1], y: [16, 0] }, { duration: 0.5, ease: ease })
+            .then(function () {
+              var pc = document.querySelector('.page-content');
+              if (pc) { pc.style.opacity = '1'; pc.style.transform = ''; pc.style.translate = ''; }
+            }).catch(function () {});
+
+          /* 2. Home hero choreography (present on the home page only). */
+          if (document.querySelector('.hero-flex')) {
+            animate('.hero-photo-frame',
+              { opacity: [0, 1], y: [28, 0], scale: [0.94, 1] },
+              { type: 'spring', visualDuration: 0.7, bounce: 0.35, delay: 0.1 });
+
+            var heroText = document.querySelectorAll('.hero-text .title, .hero-text .subtitle, .hero-stack-label');
+            if (heroText.length) {
+              animate([].slice.call(heroText),
+                { opacity: [0, 1], y: [22, 0] },
+                { type: 'spring', visualDuration: 0.6, bounce: 0.3, delay: stagger(0.1, { start: 0.22 }) });
+            }
+
+            /* Tech tiles cascade in; afterwards strip the inline transforms
+               Motion leaves behind so the CSS :hover lift keeps working
+               (inline styles would otherwise win over the :hover rule). */
+            animate('.tech-tile',
+              { opacity: [0, 1], y: [20, 0], scale: [0.9, 1] },
+              { type: 'spring', visualDuration: 0.55, bounce: 0.4, delay: stagger(0.035, { start: 0.45 }) }
+            ).then(function () {
+              var tiles = document.querySelectorAll('.tech-tile');
+              for (var i = 0; i < tiles.length; i++) {
+                tiles[i].style.opacity = '1';
+                tiles[i].style.transform = '';
+                tiles[i].style.translate = '';
+                tiles[i].style.scale = '';
+              }
+            }).catch(function () {});
+
+            /* 3. Post-list items spring in as they scroll into view (one-shot). */
+            var items = document.querySelectorAll('.post-list > li');
+            for (var j = 0; j < items.length; j++) {
+              (function (li, idx) {
+                inView(li, function (el) {
+                  animate(el,
+                    { opacity: [0, 1], y: [24, 0] },
+                    { type: 'spring', visualDuration: 0.6, bounce: 0.28, delay: Math.min(idx, 4) * 0.06 });
+                }, { amount: 0.15 });
+              })(items[j], j);
+            }
+          }
+        });
+      }).catch(function () {
+        clearTimeout(fallback);
+        revealed = true;
+        root.classList.remove('js-motion');
+      });
     })();
   </script>
 </head>

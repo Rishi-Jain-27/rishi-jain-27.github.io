@@ -64,7 +64,7 @@ _layouts/
   post.html             blog posts
   archive.html          (Centrarium legacy, not actively used)
 _includes/
-  head.html             <head>, meta, favicons, OG, AND the scroll-reveal IntersectionObserver script
+  head.html             <head>, meta, favicons, OG, the h2 scroll-reveal IntersectionObserver, AND the Motion entrance choreography
   header.html           top nav with .logo + .navigation-menu (populated from nav_links.html)
   nav_links.html        iterates site.pages where main_nav: true
   footer.html           three-column footer: nav / contact / signature
@@ -72,7 +72,7 @@ _includes/
 _posts/                 YYYY-MM-DD-slug.md — blog content
 _sass/                  Centrarium legacy SCSS (mostly overridden — see note)
 css/main.scss           ★ the real stylesheet. ~690 lines, defines theme tokens.
-js/                     empty — JS lives inline in _includes/head.html
+js/                     empty — JS lives inline in _includes/head.html (Motion is loaded from CDN there)
 index.html              home: hero (photo + title + tech grid) + paginated post list
 posts.md                /posts/ — posts grouped by category
 resume.md               /resume/ — long markdown resume
@@ -155,14 +155,29 @@ The site loads MathJax v3 from a CDN, **opt-in per page** via `math: true` in fr
 - Equation numbering is off (`tags: 'none'`). If a future post needs numbered equations, flip that in [_includes/head.html](_includes/head.html).
 - Display equations get a horizontal scrollbar on overflow rather than blowing past the 640px content column — see the `mjx-container[display="true"]` rule in [css/main.scss](css/main.scss).
 
-### Scroll-reveal targets
+### Motion / animation (two systems, both in [_includes/head.html](_includes/head.html))
 
-The IntersectionObserver in [_includes/head.html](_includes/head.html) observes:
-- `.post-list > li`
+There are now **two** entrance systems, both gated on `prefers-reduced-motion: no-preference` and both no-ops if their JS doesn't run:
+
+**1. IntersectionObserver (dependency-free) — in-article h2 markers only.**
+Adds `.js-reveal` to `<html>` and observes:
 - `.page .post-content > h2`
 - `.post .post-content > h2`
 
-If you add new content types that should fade in on scroll, either extend the selector list there or reuse one of these classes.
+CSS for it lives in the `.js-reveal …` block in [css/main.scss](css/main.scss). Use this for content that should fade in on scroll without pulling in Motion.
+
+**2. Motion ([motion.dev](https://motion.dev)) — spring-based load/scroll choreography.**
+Loaded from CDN via dynamic `import('https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm')` (version pinned — bump deliberately, don't use `@latest`). The bootstrap adds `.js-motion` to `<html>`, which hides the animated elements via CSS (the `.js-motion …` block in [css/main.scss](css/main.scss)) so there's no flash; Motion then springs them in. It drives:
+- **Page-load transition** — `.page-content` fades + rises on every page.
+- **Home hero** — `.hero-photo-frame`, then `.hero-text .title/.subtitle` + `.hero-stack-label`, then a staggered cascade of `.tech-tile`.
+- **Post list** — `.post-list > li` spring in via Motion's `inView` (one-shot) as they scroll into view. (These used to be on the IntersectionObserver above; they moved here.)
+
+Gotchas to respect:
+- **Failure / reduced-motion safety:** a 2.5s fallback (and the `.catch`) removes `.js-motion`, reverting everything to its visible resting state if the CDN module never loads. Reduced-motion users bail before the import — Motion is never even fetched. Don't break this; never leave an element hidden only by JS with no fallback.
+- **Inline-style cleanup:** Motion leaves inline `transform`/`opacity` on the elements it animates, and inline styles beat stylesheet `:hover` rules. The tech-tile cascade therefore strips its inline transforms on completion so `.tech-tile:hover { transform: … }` keeps working. If you animate any element that also has a CSS hover/active transform, do the same cleanup (and re-pin `opacity:1` rather than clearing it, since the `.js-motion` rule still sets `opacity:0`).
+- Add new Motion targets to the `.js-motion …` hide list in [css/main.scss](css/main.scss) too, or they'll flash before animating.
+
+Intensity is tuned to "confident & noticeable" (visible spring bounce, longer stagger). Dial `bounce`/`visualDuration`/`stagger` in [_includes/head.html](_includes/head.html) to taste.
 
 ### Tech tiles on home
 
