@@ -133,14 +133,23 @@
               }
             }).catch(function () {});
 
-            /* 3. Post-list items spring in as they scroll into view (one-shot). */
+            /* 3. Post-list items spring in as they scroll into view (one-shot).
+               Motion's inView hands the callback an IntersectionObserverEntry,
+               not the element — animate the captured `li`, not the arg, or the
+               items stay stuck at the .js-motion opacity:0 and vanish. Strip the
+               inline styles on completion so nothing is stranded. */
             var items = document.querySelectorAll('.post-list > li');
             for (var j = 0; j < items.length; j++) {
               (function (li, idx) {
-                inView(li, function (el) {
-                  animate(el,
+                inView(li, function () {
+                  animate(li,
                     { opacity: [0, 1], y: [24, 0] },
-                    { type: 'spring', visualDuration: 0.6, bounce: 0.28, delay: Math.min(idx, 4) * 0.06 });
+                    { type: 'spring', visualDuration: 0.6, bounce: 0.28, delay: Math.min(idx, 4) * 0.06 }
+                  ).then(function () {
+                    li.style.opacity = '1';
+                    li.style.transform = '';
+                    li.style.translate = '';
+                  }).catch(function () {});
                 }, { amount: 0.15 });
               })(items[j], j);
             }
