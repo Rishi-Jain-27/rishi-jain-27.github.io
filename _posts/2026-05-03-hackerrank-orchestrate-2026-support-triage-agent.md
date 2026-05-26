@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "HackerRank Orchestrate 2026: Building a Support Triage Agent That Doesn't Hallucinate"
+title: "HackerRank Orchestrate 2026: a support triage agent that doesn't hallucinate"
 author: "Rishi Jain"
 date: 2026-05-03 12:00:00 -0500
 categories: projects
@@ -8,57 +8,45 @@ project_url: https://github.com/Rishi-Jain-27/hackerrank-orchestrate-2026
 project_label: Code
 ---
 
-I competed in the **HackerRank Orchestrate 2026 Hackathon** and built a **conservative, RAG-based support triage agent** — finished **#298 out of 1,349** contestants. It reads incoming support tickets, retrieves relevant Markdown documentation from the provided corpus, classifies the issue type and product area, and decides whether to answer or escalate. Code is on [GitHub](https://github.com/Rishi-Jain-27/hackerrank-orchestrate-2026).
+I competed in the HackerRank Orchestrate 2026 Hackathon and built a conservative, RAG-based support triage agent. It finished #298 out of 1,349 contestants. The agent reads incoming support tickets, retrieves relevant Markdown docs from the provided corpus, classifies the issue type and product area, and decides whether to answer or escalate. Code on [GitHub](https://github.com/Rishi-Jain-27/hackerrank-orchestrate-2026).
 
-The headline design choice: I deliberately did *not* let the LLM make routing decisions.
+The headline design choice: I deliberately did not let the LLM make routing decisions.
 
-## The Split: Deterministic Routing, LLM-Generated Prose
+## Deterministic routing, LLM-generated prose
 
-The agent has two halves, and the dividing line is the most important decision in the system.
+The agent has two halves. The split between them is the most important decision in the system.
 
-**Deterministic rules** handle anything safety-critical:
+Deterministic rules handle anything safety-critical. Status (answered, escalated, refused), request type, product area, and the escalation decision are all produced by rule-based logic that the model never sees. The same input always produces the same routing output, and the decision is auditable after the fact.
 
-- **Status** — answered, escalated, or refused.
-- **Request type** — what kind of ticket this is.
-- **Product area** — which slice of the product the issue belongs to.
-- **Escalation** — whether a human needs to look at it.
+The LLM does exactly one thing: write the final response and the justification, grounded in the snippets the routing layer hands it. It's a writer, not a decider. Models hallucinate, get jailbroken, and will confidently route a billing complaint as a documentation question if given the chance. Pulling the routing decisions out of the model entirely is the only way to know, after a ticket goes wrong, why it went wrong.
 
-These don't go anywhere near the model. They're rule-based, auditable, and the same input always produces the same routing output.
+## Retrieval: company-filtered, path-aware, override-aware
 
-**The LLM** only does one thing: write the final response and the justification, grounded entirely in the retrieved snippets the routing layer hands it. It is a writer, not a decider.
+The retrieval layer does more than nearest-neighbor over chunks.
 
-This split is the whole reason the agent is trustworthy. Models hallucinate. Models can be jailbroken. Models will confidently route a billing complaint as a documentation question if you give them the chance. Routing has to be deterministic if you want to know, after the fact, why a ticket went where it went.
+- **Company-filtered retrieval.** A ticket from Company A only retrieves against documentation relevant to Company A. The agent never quotes another tenant's docs at someone.
+- **Product-area metadata from paths.** Markdown files live under structured paths, and I extract product-area metadata from those paths on ingest. The location of a file in the tree carries real signal; ignoring it would have been throwing data away.
+- **Nested overrides.** When a deeper folder needs to override its parent's product area because a subsection legitimately belongs elsewhere, the override wins. Without that, retrieval drifts wrong on edge cases.
 
-## Retrieval: Company-Filtered, Path-Aware, Override-Aware
+The snippets the LLM sees are tightly scoped to the right tenant and the right product area before any generation happens.
 
-The retrieval layer is doing a lot more than nearest-neighbor over chunks.
+## Safety layers
 
-- **Company-filtered retrieval.** A ticket from Company A only retrieves against documentation that's actually relevant to Company A. This stops the agent from quoting another tenant's docs at someone.
-- **Product-area metadata from paths.** Markdown files live under structured paths, and I extract product-area metadata from those paths on ingest. The doc's filesystem location *is* signal, and ignoring it would have been throwing data away.
-- **Nested product-area overrides.** When a deeper folder needs to override its parent's product area (because a sub-section legitimately belongs to a different area), the override is respected. Without this, retrieval drifts subtly wrong on edge cases.
+On top of retrieval and rule-based routing I stacked a few guards:
 
-The end result: the snippets the LLM sees are tightly scoped to the right tenant and the right product area before any generation happens.
+- **Prompt-injection handling.** Ticket text is treated as untrusted data, not as instructions. Role-overrides, "ignore previous instructions," embedded fake system prompts, the standard tricks all get detected and neutralized before the model ever sees them.
+- **Risk detection.** Known risky patterns like security issues, account-specific data requests, credential-shaped strings all route to escalation regardless of what the LLM would have done.
+- **Product-area consistency.** If the rule-based classifier says one product area and the retrieved docs are predominantly from another, the agent escalates instead of papering over the conflict.
+- **Postprocessing validator.** After the LLM writes its response, a validator checks that the output stays grounded in the retrieved snippets and consistent with the routing decisions. Hallucinated features, contradictions, drift off-corpus, all caught here.
 
-## Safety Layers
+Individually each guard is small. Stacked together they're what separates a demo from something I'd be willing to put near a real support queue.
 
-On top of retrieval and rule-based routing, I stacked a series of guards:
+## What it answers vs. what it escalates
 
-- **Prompt-injection handling.** Ticket text is treated as untrusted data, not as instructions. Standard injection attempts (role-overrides, "ignore previous instructions," embedded fake system prompts) are detected and neutralized before the LLM ever sees them.
-- **Risk detection.** Anything that hits known risky patterns — security issues, account-specific data requests, credential-shaped strings — gets routed to escalation regardless of how the LLM would have wanted to handle it.
-- **Product-area consistency guards.** If the rule-based classifier says one product area and the retrieved docs are predominantly from another, that's a red flag and the agent doesn't try to paper over it — it escalates instead of generating a confident wrong answer.
-- **Postprocessing validator.** After the LLM generates its response, the output runs through a validator that checks it stays grounded in the retrieved snippets and consistent with the routing decisions. If the model hallucinates a feature, contradicts a rule, or drifts off-corpus, the validator catches it.
+The behavior follows the same conservatism as the architecture. The agent answers simple, documented questions where the corpus clearly contains the answer and routing is unambiguous. It escalates anything account-specific, billing, security, assessment-related, an outage, vague, or unsupported by the docs.
 
-Each of these is individually small. Together they're the difference between a demo and something you'd actually let near a production support queue.
-
-## What It Answers vs. What It Escalates
-
-The agent's behavior is shaped by the same conservatism that drove the architecture:
-
-- It **answers** simple, documented questions where the corpus clearly contains the answer and routing is unambiguous.
-- It **escalates** anything that is account-specific, billing, security, assessment-related, an outage, vague, or unsupported by the docs.
-
-That escalation list isn't a failure mode — it's the spec. A triage agent that escalates the right 20% of tickets and answers the other 80% accurately is enormously more valuable than one that tries to answer everything and gets a meaningful slice of it wrong. Confident wrong answers in support are worse than no answers; they erode the human team's trust and create cleanup work.
+That escalation list isn't a failure mode, it's the spec. A triage agent that escalates the right 20% of tickets and answers the other 80% correctly is much more useful than one that tries to answer everything and gets a meaningful chunk wrong. Confident wrong answers erode the human team's trust in the agent's output and create cleanup work that didn't exist before.
 
 ## Takeaway
 
-The interesting part of building agents right now isn't the model. It's deciding which decisions the model is allowed to make. I gave this one exactly one job — write a response from already-retrieved, already-routed, already-validated context — and built everything around it to make sure that job is the only one it ever does. That's what "conservative" means in this context, and it's why the agent stays grounded.
+The interesting part of building agents right now isn't the model itself. It's deciding which decisions the model is allowed to make. I gave this one a single job, writing a response from already-retrieved, already-routed, already-validated context, and built everything around it to keep it inside that job.

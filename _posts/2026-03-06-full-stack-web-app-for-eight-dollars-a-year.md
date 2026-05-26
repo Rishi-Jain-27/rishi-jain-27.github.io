@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Building a Full-Stack Web App With AI and PostgreSQL — For $8/Year"
+title: "A full-stack web app for eight dollars a year"
 author: "Rishi Jain"
 date: 2026-03-06
 categories: projects
@@ -8,29 +8,24 @@ project_url: https://hwagent.org
 project_label: Visit
 ---
 
-I recently built a full-stack, web-based application backed by PostgreSQL with AI-powered features — and the total hosting cost comes out to just **$8 a year**. Check it out at [hwagent.org](https://hwagent.org).
+I built a web app with a PostgreSQL backend and some AI features baked in, and the entire thing runs for about $8 a year. It's live at [hwagent.org](https://hwagent.org).
 
-## The Stack
+## The stack
 
-At its core, the app is a full-stack web application with a PostgreSQL database powering the backend. PostgreSQL was the natural choice — it's rock-solid, open source, and scales well beyond what I need for this project. On top of that relational foundation, I integrated AI-powered features to make the app smarter and more useful.
+Postgres on the backend, a normal web frontend, AI calls wired in where they earn their keep. Postgres because I already know it and it does what I need; the AI bits sit next to ordinary CRUD rather than replacing it.
 
-## AI-Powered Features
+## What the AI actually does
 
-AI isn't just a buzzword here — it's woven into the functionality of the app. By leveraging AI capabilities, the application can do more with less code and deliver a better experience to users. The integration sits cleanly alongside the traditional CRUD operations backed by PostgreSQL.
+It's not the whole app, it's a few specific features where having a model in the loop is meaningfully better than not having one. The rest is database queries and forms.
 
-## Hardening: Input Validation and XSS Fixes
+## Hardening
 
-Building features is one thing; shipping them securely is another. I went through the application and hardened it with:
+After the features worked I went back and tightened the obvious things: validation on both sides of every form, escaping every place user content gets rendered, no raw HTML reaching the DOM. None of this is exciting. It's also the part of the project that lets me leave it up without checking on it.
 
-- **Input validation** — Every user-facing input is validated on both the client and server side. Malformed or unexpected data is rejected before it ever touches the database.
-- **XSS (Cross-Site Scripting) fixes** — I audited the frontend to ensure that user-generated content is properly sanitized and escaped. No raw HTML or unescaped data makes it into the DOM.
+## Where the $8 goes
 
-These aren't glamorous changes, but they're the kind of work that separates a toy project from something you can actually put in front of real users.
-
-## All for $8/Year
-
-The best part? The entire thing runs for just **$8 a year**. By being thoughtful about architecture and choosing the right providers, it's possible to run a full-stack app with a real database and AI features for less than the cost of a single lunch. Cloud doesn't have to mean expensive.
+A small managed Postgres instance plus a domain. That's it. Nothing else is paid. The architecture is boring enough to fit on a free or near-free tier of whatever provider you trust.
 
 ## Takeaway
 
-You don't need a big budget to build something real. A PostgreSQL-backed, AI-enhanced, security-hardened web app is well within reach — even on a shoestring budget. Start building, ship it, and harden it. In that order.
+A real database, a real frontend, a few AI features, and a domain you can hand someone, for the price of a single lunch per year. The lesson isn't that hosting is cheap (it is). It's that most of the cost in side projects is paying for things you don't actually use.

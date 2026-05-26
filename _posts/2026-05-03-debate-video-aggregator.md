@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Aggregating Every Debate Round on YouTube — and Letting AI Recommend the Best Ones"
+title: "A YouTube debate-video aggregator with AI recommendations"
 author: "Rishi Jain"
 date: 2026-05-03
 categories: projects
@@ -8,28 +8,28 @@ project_url: https://debate-search.com
 project_label: Visit
 ---
 
-Debate is one of those activities where the learning curve is brutal if you don't have access to good rounds to watch. Coaches will tell you to "watch more rounds," but the rounds are scattered across hundreds of YouTube channels — camp uploads, tournament archives, individual debater playlists — with no central place to find them and no real way to know which ones are actually worth your two hours. So I built one — live at [debate-search.com](https://debate-search.com).
+Coaches tell debaters to watch more rounds. The problem is that the rounds live across hundreds of YouTube channels (camp uploads, tournament archives, individual playlists) with no central index and no real way to know in advance which ones are worth two hours of your evening. So I built one, at [debate-search.com](https://debate-search.com).
 
-## What It Does
+## What it does
 
-The app is a full-stack web application that aggregates debate videos across YouTube. Instead of asking users to hunt through channels, it pulls rounds in via the **YouTube Data API** and serves them back through embedded players — so the entire viewing experience stays inside the app while YouTube handles delivery. From a student's perspective, it looks like one giant, searchable library of every round worth watching.
+The app pulls debate videos from across YouTube via the Data API and serves them through embedded players, so the viewing experience stays inside the app while YouTube handles the actual streaming. From a student's perspective it looks like one large, searchable library.
 
-On top of that aggregation layer, I built an **AI recommendation system** that surfaces the best rounds for a given user. The model takes into account the kind of debate the user is preparing for — the topic, side, style, level — and suggests rounds that are most likely to actually move the needle for them. A novice prepping for their first tournament gets very different recommendations than a varsity debater grinding for nationals, and the goal is to make digital debate accessible to students who don't have a coach feeding them rounds by hand.
+Sitting on top of the catalog is a recommendation system that takes the kind of debate a user is preparing for (topic, side, style, level) and surfaces the rounds most likely to help. A novice prepping for their first tournament gets very different suggestions than a varsity debater grinding for nationals. The goal is to give students without a coach something close to what a coach provides: someone pointing at the next round they should watch.
 
-## Datasets I Had to Manage
+## Datasets I had to manage
 
-A surprising amount of the work wasn't the AI or the embeds — it was data modeling. The app maintains several datasets that all have to stay in sync:
+Most of the work wasn't the recommender or the embeds. It was data modeling. Three things had to stay in sync:
 
-- **Users** — accounts, preferences, watch history, and the signals that feed the recommender.
-- **Admins** — a separate role with permissions to curate the catalog, flag bad uploads, and override recommendations when something obviously wrong slips through.
-- **Videos and metadata** — the YouTube video ID, title, channel, topic, side, year, tournament, judges where known, and a bunch of derived fields I compute on ingest. Keeping this metadata clean is what makes the recommendations work; garbage in, garbage out.
+- **Users.** Accounts, preferences, watch history, the signals the recommender trains on.
+- **Admins.** A separate role with permission to curate the catalog, flag bad uploads, and override recommendations when something obviously wrong slips through.
+- **Videos and metadata.** YouTube video ID, title, channel, topic, side, year, tournament, judges where known, plus derived fields I compute on ingest. Clean metadata is the input the recommender depends on.
 
-Getting these datasets to play well together — without leaking admin-only fields to regular users, without breaking referential integrity when a YouTube video gets deleted upstream, without letting the recommender train on stale data — was the part of the project I underestimated the most.
+Getting these to play well together without leaking admin-only fields to regular users, without breaking referential integrity when a YouTube video gets deleted upstream, and without letting the recommender train on stale data was the part I most underestimated.
 
-## Why It Matters
+## Why it matters
 
-Debate has a real access problem. Kids at well-funded programs get access to coaches, camp recordings, and curated round libraries; everyone else gets a YouTube search bar. Aggregating the rounds is the easy half — the AI recommendations are what actually expand digital debate accessibility, because they replace the part of the experience that used to require an experienced coach sitting next to you saying *"watch this one next."*
+Debate has an access problem. Kids at well-funded programs get coaches, camp recordings, and curated round libraries. Everyone else gets a YouTube search bar. Aggregating the rounds is the easy half. The recommendations are the half that replaces an experienced coach sitting next to you saying "watch this one next."
 
 ## Takeaway
 
-The interesting engineering wasn't any one piece — it was stitching together a third-party content API, a recommendation model, and a multi-role data model into something a 14-year-old novice and a coach can both open up and immediately get value out of. That's the bar I care about: does it actually help someone get better at debate? Everything else is implementation detail.
+The interesting engineering was stitching three pieces together: a third-party content API, a recommendation model, and a multi-role data model, into something a 14-year-old novice and a coach can both open and immediately get something out of.
