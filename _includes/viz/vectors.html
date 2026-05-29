@@ -1,0 +1,176 @@
+<!-- Interactive 2D vector widget: drag the tips of a and b, watch the dot
+     product, norms, cosine similarity and angle update live. Theme-matched to
+     the site tokens. Self-contained and dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/vectors.html a="4,1" b="1,3" %}{% endraw %}
+     a / b are optional "x,y" starting vectors in grid units. -->
+{% assign _a = include.a | default: "4,1" %}
+{% assign _b = include.b | default: "1,3" %}
+<figure class="vec-viz" data-a="{{ _a }}" data-b="{{ _b }}">
+  <canvas class="vec-viz-canvas" role="img"
+          aria-label="Interactive 2D vectors a and b. Drag the arrow tips to change them; the dot product, norms, cosine similarity and angle update live."></canvas>
+  <div class="vec-viz-readout" aria-live="polite">
+    <span><b>a·b</b><span data-vec="dot">—</span></span>
+    <span><b>‖a‖</b><span data-vec="na">—</span></span>
+    <span><b>‖b‖</b><span data-vec="nb">—</span></span>
+    <span><b>cos θ</b><span data-vec="cos">—</span></span>
+    <span><b>θ</b><span data-vec="ang">—</span></span>
+  </div>
+  <figcaption>Drag the tips of <span class="vec-a">a</span> and <span class="vec-b">b</span>. The smaller the angle, the higher the cosine similarity.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__vecVizBooted) return;
+    window.__vecVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', fg: '#f0f0f5',
+      a: '#d4af7a', b: '#ebc999', arc: 'rgba(212,175,122,0.25)'
+    };
+    var R = 6;          /* vertical half-range, in grid units */
+    var HIT = 16;       /* px radius for grabbing a tip */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.vec-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['dot', 'na', 'nb', 'cos', 'ang'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-vec="' + k + '"]');
+      });
+
+      function parse(s, dx, dy) {
+        var p = (s || '').split(',');
+        var x = parseFloat(p[0]), y = parseFloat(p[1]);
+        return { x: isFinite(x) ? x : dx, y: isFinite(y) ? y : dy };
+      }
+      var a = parse(fig.dataset.a, 4, 1);
+      var b = parse(fig.dataset.b, 1, 3);
+
+      var w = 0, h = 0, cx = 0, cy = 0, scale = 1, dpr = 1;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = Math.round(w / 1.5);
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cx = w / 2; cy = h / 2;
+        scale = (h / 2) / R;
+        draw();
+      }
+
+      function toPx(gx, gy) { return { x: cx + gx * scale, y: cy - gy * scale }; }
+      function toGrid(px, py) { return { x: (px - cx) / scale, y: (cy - py) / scale }; }
+
+      function arrow(v, color, label) {
+        var tip = toPx(v.x, v.y);
+        ctx.strokeStyle = color; ctx.fillStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+        var ang = Math.atan2(cy - tip.y, tip.x - cx);  /* screen-space, y flipped */
+        var head = 11;
+        ctx.beginPath();
+        ctx.moveTo(tip.x, tip.y);
+        ctx.lineTo(tip.x - head * Math.cos(ang - 0.4), tip.y + head * Math.sin(ang - 0.4));
+        ctx.lineTo(tip.x - head * Math.cos(ang + 0.4), tip.y + head * Math.sin(ang + 0.4));
+        ctx.closePath(); ctx.fill();
+        /* draggable handle */
+        ctx.beginPath(); ctx.arc(tip.x, tip.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = '#1e1f2a'; ctx.lineWidth = 2; ctx.stroke();
+        /* label */
+        ctx.fillStyle = color;
+        ctx.font = '600 15px ui-monospace, SFMono-Regular, Menlo, monospace';
+        var lx = tip.x + (v.x >= 0 ? 10 : -18), ly = tip.y + (v.y >= 0 ? -10 : 18);
+        ctx.fillText(label, lx, ly);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        /* grid */
+        ctx.lineWidth = 1;
+        var xExtent = Math.ceil((w / 2) / scale);
+        for (var gx = -xExtent; gx <= xExtent; gx++) {
+          var p = toPx(gx, 0);
+          ctx.strokeStyle = gx === 0 ? C.axis : C.grid;
+          ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, h); ctx.stroke();
+        }
+        for (var gy = -R; gy <= R; gy++) {
+          var q = toPx(0, gy);
+          ctx.strokeStyle = gy === 0 ? C.axis : C.grid;
+          ctx.beginPath(); ctx.moveTo(0, q.y); ctx.lineTo(w, q.y); ctx.stroke();
+        }
+        /* angle arc between a and b */
+        var aA = Math.atan2(a.y, a.x), aB = Math.atan2(b.y, b.x);
+        ctx.strokeStyle = C.b; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 34, -aA, -aB, aA < aB);
+        ctx.stroke();
+        /* vectors */
+        arrow(a, C.a, 'a');
+        arrow(b, C.b, 'b');
+      }
+
+      function fmt(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+      function update() {
+        var dot = a.x * b.x + a.y * b.y;
+        var na = Math.hypot(a.x, a.y), nb = Math.hypot(b.x, b.y);
+        var cos = (na && nb) ? dot / (na * nb) : 0;
+        cos = Math.max(-1, Math.min(1, cos));
+        out.dot.textContent = fmt(dot);
+        out.na.textContent = fmt(na);
+        out.nb.textContent = fmt(nb);
+        out.cos.textContent = fmt(cos);
+        out.ang.textContent = (Math.round(Math.acos(cos) * 1800 / Math.PI) / 10).toFixed(1) + '°';
+      }
+
+      var drag = null;
+      function pointerPx(e) {
+        var r = canvas.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+      canvas.addEventListener('pointerdown', function (e) {
+        var p = pointerPx(e);
+        var ta = toPx(a.x, a.y), tb = toPx(b.x, b.y);
+        var da = Math.hypot(p.x - ta.x, p.y - ta.y), db = Math.hypot(p.x - tb.x, p.y - tb.y);
+        if (da <= HIT && da <= db) drag = a;
+        else if (db <= HIT) drag = b;
+        if (drag) { canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        var g = toGrid(pointerPx(e).x, pointerPx(e).y);
+        drag.x = Math.max(-R, Math.min(R, Math.round(g.x * 2) / 2));
+        drag.y = Math.max(-R, Math.min(R, Math.round(g.y * 2) / 2));
+        draw(); update();
+      });
+      function end(e) { if (drag) { try { canvas.releasePointerCapture(e.pointerId); } catch (x) {} drag = null; } }
+      canvas.addEventListener('pointerup', end);
+      canvas.addEventListener('pointercancel', end);
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      resize();
+      update();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.vec-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

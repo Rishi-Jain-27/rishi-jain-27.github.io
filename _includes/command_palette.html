@@ -1,0 +1,156 @@
+<!-- ⌘K / Ctrl-K command palette: fuzzy search over posts, nav pages, and quick
+     actions. Fully self-contained and dependency-free — must work even if the
+     Motion CDN never loads and for reduced-motion users (it's navigation, not
+     decoration). Markup + Liquid-built index + behaviour all live here. -->
+<div class="cmdk" id="cmdk" hidden>
+  <div class="cmdk-backdrop" data-cmdk-close></div>
+  <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Search and navigation">
+    <div class="cmdk-input-row">
+      <span class="cmdk-prompt" aria-hidden="true">&gt;</span>
+      <input type="text" class="cmdk-input" placeholder="Search posts, pages, actions…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search">
+      <kbd class="cmdk-key">esc</kbd>
+    </div>
+    <ul class="cmdk-results" role="listbox" aria-label="Results"></ul>
+    <p class="cmdk-empty" hidden>No matches.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var INDEX = [
+      {% for post in site.posts %}{ "t": {{ post.title | jsonify }}, "u": {{ post.url | prepend: site.baseurl | jsonify }}, "k": "post", "d": {{ post.date | date: "%b %Y" | jsonify }}, "c": {{ post.categories | join: ", " | jsonify }} },
+      {% endfor %}
+      {% for page in site.pages %}{% if page.title and page.main_nav == true %}{ "t": {{ page.title | jsonify }}, "u": {{ page.url | prepend: site.baseurl | jsonify }}, "k": "page" },
+      {% endif %}{% endfor %}
+      { "t": "Home", "u": {{ "/" | prepend: site.baseurl | jsonify }}, "k": "go" },
+      { "t": "GitHub", "u": "https://github.com/rishi-jain-27", "k": "go", "x": true },
+      { "t": "RSS feed", "u": {{ "/feed.xml" | prepend: site.baseurl | jsonify }}, "k": "go", "x": true }
+    ];
+
+    var root = document.getElementById('cmdk');
+    if (!root) return;
+    var panel = root.querySelector('.cmdk-panel');
+    var input = root.querySelector('.cmdk-input');
+    var list = root.querySelector('.cmdk-results');
+    var empty = root.querySelector('.cmdk-empty');
+    var sel = 0, rows = [], lastFocus = null;
+
+    function meta(it) {
+      if (it.k === 'post') return (it.d || '') + (it.c ? ' · ' + it.c : '');
+      if (it.k === 'page') return 'page';
+      return it.x ? 'open ↗' : 'go';
+    }
+
+    /* Subsequence fuzzy match: every query char must appear in order. Score
+       rewards contiguous runs and an early/word-boundary start; -1 = no match. */
+    function score(q, text) {
+      if (!q) return 0;
+      var t = text.toLowerCase(), s = 0, ti = 0, run = 0, first = -1;
+      for (var qi = 0; qi < q.length; qi++) {
+        var c = q[qi], found = t.indexOf(c, ti);
+        if (found === -1) return -1;
+        if (first === -1) first = found;
+        run = (found === ti) ? run + 1 : 0;
+        s += 1 + run * 2;
+        if (found === 0 || t[found - 1] === ' ') s += 3;
+        ti = found + 1;
+      }
+      return s - first * 0.1;
+    }
+
+    function render() {
+      var q = input.value.trim().toLowerCase();
+      var scored = [];
+      for (var i = 0; i < INDEX.length; i++) {
+        var it = INDEX[i];
+        var sc = score(q, it.t + ' ' + (it.c || ''));
+        if (sc >= 0) scored.push({ it: it, sc: sc });
+      }
+      scored.sort(function (a, b) { return b.sc - a.sc; });
+      if (q === '') scored.sort(function (a, b) {
+        var order = { post: 0, page: 1, go: 2 };
+        return order[a.it.k] - order[b.it.k];
+      });
+      scored = scored.slice(0, 12);
+
+      list.innerHTML = '';
+      rows = [];
+      scored.forEach(function (entry, idx) {
+        var it = entry.it;
+        var li = document.createElement('li');
+        li.className = 'cmdk-row';
+        li.setAttribute('role', 'option');
+        li.innerHTML =
+          '<span class="cmdk-kind">' + it.k + '</span>' +
+          '<span class="cmdk-title"></span>' +
+          '<span class="cmdk-meta"></span>';
+        li.querySelector('.cmdk-title').textContent = it.t;
+        li.querySelector('.cmdk-meta').textContent = meta(it);
+        li.addEventListener('mouseenter', function () { select(idx); });
+        li.addEventListener('click', function () { go(it); });
+        list.appendChild(li);
+        rows.push({ el: li, it: it });
+      });
+      empty.hidden = rows.length > 0;
+      sel = 0;
+      select(0);
+    }
+
+    function select(i) {
+      if (!rows.length) return;
+      sel = (i + rows.length) % rows.length;
+      rows.forEach(function (r, idx) {
+        var on = idx === sel;
+        r.el.classList.toggle('is-selected', on);
+        r.el.setAttribute('aria-selected', on ? 'true' : 'false');
+        if (on) r.el.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    function go(it) {
+      close();
+      if (it.x) { window.open(it.u, '_blank', 'noopener'); }
+      else { window.location.href = it.u; }
+    }
+
+    function open() {
+      if (!root.hidden) return;
+      lastFocus = document.activeElement;
+      root.hidden = false;
+      requestAnimationFrame(function () { root.classList.add('is-open'); });
+      input.value = '';
+      render();
+      input.focus();
+    }
+    function close() {
+      if (root.hidden) return;
+      root.classList.remove('is-open');
+      root.hidden = true;
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    document.addEventListener('keydown', function (e) {
+      var k = e.key.toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && k === 'k') { e.preventDefault(); root.hidden ? open() : close(); return; }
+      if (k === '/' && root.hidden) {
+        var a = document.activeElement, tag = a && a.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !(a && a.isContentEditable)) { e.preventDefault(); open(); }
+      }
+    });
+
+    root.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); select(sel + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); select(sel - 1); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (rows[sel]) go(rows[sel].it); }
+    });
+    input.addEventListener('input', render);
+    Array.prototype.forEach.call(root.querySelectorAll('[data-cmdk-close]'), function (el) {
+      el.addEventListener('click', close);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cmdk-open]'), function (el) {
+      el.addEventListener('click', function (e) { e.preventDefault(); open(); });
+    });
+  })();
+</script>

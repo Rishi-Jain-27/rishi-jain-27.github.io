@@ -63,10 +63,12 @@ _layouts/
   page.html             static pages (resume, about, posts index)
   post.html             blog posts
 _includes/
-  head.html             <head>, meta, favicons, OG, the h2 scroll-reveal IntersectionObserver, AND the Motion entrance choreography
-  header.html           top nav with .logo + .navigation-menu (populated from nav_links.html)
+  head.html             <head>, meta, favicons, OG, the h2 scroll-reveal IntersectionObserver, the Motion entrance choreography, AND the scroll-spy section-rail builder
+  header.html           top nav with .logo + .navigation-menu + the ⌘K search trigger
   nav_links.html        iterates site.pages where main_nav: true
   footer.html           three-column footer: nav / contact / signature
+  command_palette.html  ⌘K command palette: markup + Liquid-built search index + self-contained behaviour
+  viz/vectors.html      reusable interactive 2D vector widget (canvas); {% raw %}{% include viz/vectors.html %}{% endraw %} in a post
   page_divider.html     the ◆ divider
 _posts/                 YYYY-MM-DD-slug.md, blog content
 css/main.scss           ★ the only stylesheet. defines theme tokens; fully self-contained (no @import).
@@ -198,6 +200,27 @@ Gotchas to respect:
 - Add new **entrance** Motion targets (things that start hidden and spring in) to the `.js-motion …` hide list in [css/main.scss](css/main.scss) too, or they'll flash before animating. **Don't** add ongoing-interaction targets (parallax, magnetic hover, the progress bar) to that list — they're visible at rest and must not depend on JS to appear.
 
 Intensity is tuned to "confident & noticeable" (visible spring bounce, longer stagger). Dial `bounce`/`visualDuration`/`stagger` in [_includes/head.html](_includes/head.html) to taste.
+
+### Interactive components
+
+Three dependency-free, vanilla-JS components added 2026-05. Unlike the Motion choreography, **none of them depend on the Motion CDN** — the palette and rail are navigation, so they must work even if Motion never loads.
+
+**⌘K command palette** ([_includes/command_palette.html](_includes/command_palette.html), styled `.cmdk*` in [css/main.scss](css/main.scss), included once in [_layouts/default.html](_layouts/default.html)).
+- Opens on `⌘K` / `Ctrl-K`, on `/` (unless typing in a field), or by clicking the header's `[data-cmdk-open]` trigger. Esc / backdrop-click closes.
+- The search index is **built at build time by Liquid** inside the include: every `site.posts`, every `main_nav` page, plus static actions (Home, GitHub, RSS). It's a JS array literal (titles via `jsonify`), not a fetched JSON file.
+- Matching is a small subsequence fuzzy scorer over title + categories; arrow keys + Enter navigate. External actions (`"x": true`) open in a new tab.
+- To add a quick action, append an object to the `INDEX` array in the include.
+
+**Scroll-spy section rail** (built in the second `<script>` of [_includes/head.html](_includes/head.html); styled `.section-rail*`).
+- On post pages with ≥2 `## ` sections, it builds a fixed left-margin rail of the auto-numbered `// 01` markers; the active section lights gold as you scroll (IntersectionObserver with a thin top activation band), hover expands labels, click smooth-scrolls.
+- CSS hides it below 1240px (no room beside the 640px column). It is **not** gated on reduced-motion (navigation), but its click-scroll honours `prefers-reduced-motion`.
+- It assigns `id`s to `h2`s that lack them (`section-1`, …) — if you later add manual heading anchors, the rail will prefer the existing `id`.
+
+**Interactive vector widget** ([_includes/viz/vectors.html](_includes/viz/vectors.html), styled `.vec-viz*`).
+- A `<canvas>` with two draggable vectors `a`, `b`; live dot product, norms, cosine similarity and angle. Built for the linear-algebra material and the "more math" direction.
+- Drop into a post with `{% raw %}{% include viz/vectors.html %}{% endraw %}`; optional starting vectors `{% raw %}{% include viz/vectors.html a="4,1" b="1,3" %}{% endraw %}` (grid units, range ±6, drag snaps to 0.5).
+- The init script ships **only on pages that use the include** (guarded by `window.__vecVizBooted`); it scans all `.vec-viz` on the page, so multiple widgets per post work. Theme colours are hardcoded in the script as a `C` map mirroring the SCSS tokens — if you retune the palette, update both.
+- It's a 2D widget; the source notes use 3D vectors, so the on-page example should pick 2D vectors (the geometry/cosine intuition is identical).
 
 ### Tech tiles on home
 

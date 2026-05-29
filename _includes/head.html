@@ -220,4 +220,70 @@
       });
     })();
   </script>
+
+  <script>
+    /* ---- Scroll-spy section rail (long posts) ----
+       Independent of Motion and NOT gated on reduced-motion: it's navigation,
+       so it must work for everyone. Builds a fixed margin rail from the post's
+       h2 markers and lights the active one as you scroll. CSS hides the rail
+       below 1240px (no room). No-ops on pages without a post body. */
+    (function () {
+      if (!('IntersectionObserver' in window)) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function start() {
+        var content = document.querySelector('.post .post-content');
+        if (!content) return;
+        var heads = content.querySelectorAll(':scope > h2');
+        if (heads.length < 2) return;
+
+        var rail = document.createElement('nav');
+        rail.className = 'section-rail';
+        rail.setAttribute('aria-label', 'Sections');
+
+        var byId = {};
+        Array.prototype.forEach.call(heads, function (h, i) {
+          if (!h.id) h.id = 'section-' + (i + 1);
+          var a = document.createElement('a');
+          a.className = 'section-rail-item';
+          a.href = '#' + h.id;
+          var n = ('0' + (i + 1)).slice(-2);
+          a.innerHTML = '<span class="section-rail-tick"></span>' +
+                        '<span class="section-rail-num">' + n + '</span>' +
+                        '<span class="section-rail-label"></span>';
+          a.querySelector('.section-rail-label').textContent = h.textContent;
+          a.addEventListener('click', function (e) {
+            e.preventDefault();
+            h.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+            history.replaceState(null, '', '#' + h.id);
+          });
+          rail.appendChild(a);
+          byId[h.id] = a;
+        });
+        document.body.appendChild(rail);
+
+        function setActive(id) {
+          for (var key in byId) {
+            if (byId.hasOwnProperty(key)) byId[key].classList.toggle('is-active', key === id);
+          }
+        }
+
+        /* The rootMargin pins a thin activation band near the top of the
+           viewport; whichever heading sits in it is the current section. */
+        var active = heads[0].id;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) active = en.target.id;
+          });
+          setActive(active);
+        }, { rootMargin: '-12% 0px -78% 0px', threshold: 0 });
+        Array.prototype.forEach.call(heads, function (h) { io.observe(h); });
+        setActive(active);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+      } else { start(); }
+    })();
+  </script>
 </head>

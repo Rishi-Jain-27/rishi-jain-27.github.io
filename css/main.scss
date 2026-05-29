@@ -191,6 +191,7 @@ pre code {
   letter-spacing: 0.02em;
   font-size: 0.95rem;
   border: 0;
+  margin-right: auto;   /* keep logo left; nav + ⌘K group stay together on the right */
 }
 .navigation .logo:hover { color: $accent-hi; border: 0; }
 .navigation .logo img { display: none; }       /* slim: hide raster logo */
@@ -752,3 +753,220 @@ mjx-container { color: $fg; }
   .post-meta { flex-direction: column; gap: 0.2rem; }
   .post-meta .post-categories { text-align: left; }
 }
+
+/* ============================================================
+   ⌘K command palette  (behaviour in _includes/command_palette.html)
+   ============================================================ */
+.cmdk-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.32rem 0.6rem;
+  background: rgba($bg-elev, 0.6);
+  border: 1px solid $rule;
+  border-radius: 7px;
+  color: $fg-muted;
+  font-family: $font-mono;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+.cmdk-trigger:hover { border-color: rgba($accent, 0.5); color: $fg; background: rgba($bg-elev, 0.95); }
+.cmdk-trigger kbd {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  color: $fg-dim;
+  border: 1px solid $rule;
+  border-radius: 4px;
+  padding: 0.05rem 0.32rem;
+}
+
+.cmdk[hidden] { display: none; }
+.cmdk {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.cmdk-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(#000, 0.45);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+.cmdk-panel {
+  position: relative;
+  margin-top: 12vh;
+  width: min(600px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: $bg-elev;
+  border: 1px solid $rule;
+  border-radius: 12px;
+  box-shadow:
+    0 24px 70px -20px rgba(#000, 0.7),
+    0 0 0 1px rgba($accent, 0.08),
+    0 0 60px -30px rgba($accent, 0.4);
+  overflow: hidden;
+}
+.cmdk-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid $rule;
+}
+.cmdk-prompt { color: $accent; font-family: $font-mono; font-weight: 600; }
+.cmdk-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: $fg;
+  font-family: $font-sans;
+  font-size: 1rem;
+}
+.cmdk-input::placeholder { color: $fg-dim; }
+.cmdk-key {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  color: $fg-dim;
+  border: 1px solid $rule;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+}
+.cmdk-results { list-style: none; margin: 0; padding: 0.4rem; overflow-y: auto; }
+.cmdk-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 7px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.cmdk-row.is-selected { background: rgba($accent, 0.12); border-left-color: $accent; }
+.cmdk-kind {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $fg-dim;
+  min-width: 2.6rem;
+}
+.cmdk-row.is-selected .cmdk-kind { color: $accent; }
+.cmdk-title { flex: 1; color: $fg; font-size: 0.92rem; }
+.cmdk-meta { color: $fg-dim; font-family: $font-mono; font-size: 0.68rem; white-space: nowrap; }
+.cmdk-empty { padding: 1.2rem 1rem; color: $fg-dim; font-family: $font-mono; font-size: 0.85rem; text-align: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cmdk { opacity: 0; transition: opacity 140ms ease; }
+  .cmdk.is-open { opacity: 1; }
+  .cmdk-panel { transform: translateY(-8px) scale(0.98); transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .cmdk.is-open .cmdk-panel { transform: none; }
+}
+@media (max-width: 600px) {
+  .cmdk-trigger-text { display: none; }
+}
+
+/* ============================================================
+   Scroll-spy section rail  (built in _includes/head.html)
+   Sits in the left margin of long posts, tracks the // 01 markers.
+   ============================================================ */
+.section-rail {
+  position: fixed;
+  top: 50%;
+  left: calc(50vw - #{$content-width} / 2 - 9rem);
+  transform: translateY(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  max-height: 72vh;
+  overflow: hidden;
+  padding: 0.2rem 0;
+}
+.section-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.26rem 0;
+  color: $fg-dim;
+  border: 0 !important;
+  text-decoration: none !important;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.section-rail-tick {
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  transition: width 160ms ease, background 160ms ease;
+}
+.section-rail-num { opacity: 0; transition: opacity 160ms ease; }
+.section-rail-label {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  color: $fg-muted;
+  transition: max-width 220ms ease, opacity 160ms ease;
+}
+.section-rail:hover .section-rail-num { opacity: 1; }
+.section-rail:hover .section-rail-label { max-width: 7rem; opacity: 1; }
+.section-rail-item:hover { color: $fg; }
+.section-rail-item.is-active { color: $accent; }
+.section-rail-item.is-active .section-rail-tick { width: 26px; background: $accent; }
+@media (max-width: 1240px) { .section-rail { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .section-rail-tick, .section-rail-num, .section-rail-label { transition: none; }
+}
+
+/* ============================================================
+   Interactive vector viz  (markup _includes/viz/vectors.html, init in head)
+   ============================================================ */
+.vec-viz {
+  margin: 2rem 0;
+  padding: 0.9rem;
+  background: $bg-elev;
+  border: 1px solid $rule;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba($accent, 0.05), 0 14px 40px -22px rgba($accent, 0.35);
+}
+.vec-viz-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 7px;
+  background: rgba(#000, 0.18);
+  touch-action: none;
+  cursor: grab;
+}
+.vec-viz-canvas:active { cursor: grabbing; }
+.vec-viz-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1.1rem;
+  margin-top: 0.85rem;
+  font-family: $font-mono;
+  font-size: 0.8rem;
+  color: $fg-muted;
+}
+.vec-viz-readout b { color: $fg-dim; font-weight: 400; margin-right: 0.35rem; }
+.vec-viz-readout [data-vec] { color: $accent-hi; }
+.vec-viz figcaption {
+  margin-top: 0.7rem;
+  font-size: 0.78rem;
+  color: $fg-dim;
+}
+.vec-viz .vec-a { color: $accent; font-family: $font-mono; }
+.vec-viz .vec-b { color: $accent-hi; font-family: $font-mono; }
