@@ -41,12 +41,52 @@ html, body {
 }
 
 body {
+  min-height: 100vh;
+}
+
+/* ----- Ambient gold glow -----
+   Two soft radial gradients of $accent over $bg, the same recurring signature
+   as before — but on a dedicated fixed layer behind everything rather than on
+   body, so it can drift via a compositor-only transform without repainting the
+   page. Body stays solid $bg behind it; the gradients fade to transparent, so
+   the small drift never reveals a seam. The drift is gated on reduced-motion;
+   the resting appearance is identical for everyone. */
+.bg-glow {
+  position: fixed;
+  inset: -40px;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(900px 480px at 50% -120px, rgba($accent, 0.10), transparent 65%),
-    radial-gradient(700px 400px at 90% 10%, rgba($accent, 0.04), transparent 70%),
-    $bg;
-  background-attachment: fixed;
-  min-height: 100vh;
+    radial-gradient(700px 400px at 90% 10%, rgba($accent, 0.04), transparent 70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes glow-drift {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.04); }
+    50%      { transform: translate3d(-22px, 16px, 0) scale(1.08); }
+  }
+  .bg-glow {
+    animation: glow-drift 26s ease-in-out infinite;
+    will-change: transform;
+  }
+}
+
+/* ----- Reading progress bar (post pages) -----
+   A thin warm-gold bar pinned to the top, scaled along X by scroll progress via
+   Motion in _includes/head.html. Rests at scaleX(0) so it's invisible until JS
+   drives it; reduced-motion / no-JS users simply never see it. */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, $accent, $accent-hi);
+  box-shadow: 0 0 12px -2px rgba($accent, 0.6);
+  z-index: 1000;
+  pointer-events: none;
 }
 
 img { max-width: 100%; height: auto; display: block; }

@@ -34,14 +34,14 @@ $accent    #d4af7a   warm gold, THE color
 $accent-hi #ebc999   hover/lifted accent
 ```
 
-Background uses two soft radial gradients of `$accent` over `$bg` for ambient glow; `background-attachment: fixed`.
+Background uses two soft radial gradients of `$accent` over `$bg` for ambient glow. These live on a dedicated fixed `.bg-glow` layer (not `body`) so the glow can drift via a compositor-only transform; `body` itself is solid `$bg`. See "Motion" below.
 
 ### Typography
 
 - **Sans:** system stack with Inter preferred (`-apple-system, BlinkMacSystemFont, "Inter", ...`). Body weight `300`.
 - **Mono:** `ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, ...`. Used for **accents**, section markers, project pills, tech chips, code.
 - Headings: weight 500–600, letter-spacing slightly negative (`-0.01em` / `-0.02em`).
-- Note: `_sass/base/_variables.scss` defines an *older* light-theme (Open Sans / Roboto Slab), that's legacy from the Centrarium theme and is overridden by [css/main.scss](css/main.scss). Don't edit the old vars expecting visible change.
+- Note: all type/color lives in [css/main.scss](css/main.scss). The old Centrarium `_sass/` light-theme (Open Sans / Roboto Slab, bourbon/neat) was removed in 2026-05 once it was confirmed dead — `main.scss` never imported it. There is no `_sass/` directory anymore.
 
 ### Recurring visual signatures (preserve these)
 
@@ -54,7 +54,7 @@ Background uses two soft radial gradients of `$accent` over `$bg` for ambient gl
 
 ## Repo layout
 
-Jekyll defaults plus a few quirks. Most "real" styling lives in `css/main.scss`, **not** in `_sass/`.
+Jekyll defaults plus a few quirks. All styling lives in `css/main.scss` — there is no `_sass/` directory.
 
 ```
 _config.yml             site title, social links, OG/twitter image, pagination (5/page)
@@ -62,7 +62,6 @@ _layouts/
   default.html          shell: head + header + {{ content }} + footer
   page.html             static pages (resume, about, posts index)
   post.html             blog posts
-  archive.html          (Centrarium legacy, not actively used)
 _includes/
   head.html             <head>, meta, favicons, OG, the h2 scroll-reveal IntersectionObserver, AND the Motion entrance choreography
   header.html           top nav with .logo + .navigation-menu (populated from nav_links.html)
@@ -70,8 +69,7 @@ _includes/
   footer.html           three-column footer: nav / contact / signature
   page_divider.html     the ◆ divider
 _posts/                 YYYY-MM-DD-slug.md, blog content
-_sass/                  Centrarium legacy SCSS (mostly overridden, see note)
-css/main.scss           ★ the real stylesheet. ~690 lines, defines theme tokens.
+css/main.scss           ★ the only stylesheet. defines theme tokens; fully self-contained (no @import).
 js/                     empty, JS lives inline in _includes/head.html (Motion is loaded from CDN there)
 index.html              home: hero (photo + title + tech grid) + paginated post list
 posts.md                /posts/, posts grouped by category
@@ -82,9 +80,7 @@ feed.xml                RSS
 Gemfile / Gemfile.lock  github-pages gem
 ```
 
-### About `_sass/`
-
-`_sass/base/_variables.scss`, `_layout.scss`, `bourbon/`, `neat/` are all **inherited from the Centrarium theme**. They define a light-mode palette and the old layout. `css/main.scss` mostly overrides all of it (and even hides leftover Font Awesome icons it can't suppress). **Default to editing `css/main.scss`**, not `_sass/`. If you find yourself wanting to fix something in `_sass/`, first check whether `main.scss` already overrides it, usually it does.
+The site was originally built on the Centrarium theme, which shipped a `_sass/` tree (light-mode palette, bourbon/neat grid, an `archive.html` layout, a `tooltips/` include). All of it was dead weight — `main.scss` is self-contained and never imported `_sass/`, and nothing referenced the archive layout or tooltips. It was deleted in 2026-05. If you ever want to add partials, you'd re-create `_sass/` and `@import` from `main.scss`; today there's nothing to override.
 
 ## Conventions
 
@@ -110,6 +106,11 @@ Body is kramdown. Use `## Section` for top-level sections (will auto-get `// 01`
 #### Writing voice (read the existing posts before drafting a new one)
 
 The published posts have a consistent voice. Match it. The voice was deliberately tightened in 2026-05 to cut AI-flavored prose tells; everything in this section is the post-tightening direction.
+
+**Direction going forward (Rishi's ask, 2026-05): more code, more math, more human.** Lean further into all three:
+- **More code.** Show real snippets, not just describe them. Actual functions, configs, the line that mattered. Use fenced code blocks freely.
+- **More math.** Set `math: true` and do the derivation. Write the equation, work the example, show the gradient. Don't hand-wave the technical core (see the "Math" section for the MathJax/kramdown rules).
+- **More human.** Sound like a person who actually did the thing, not a polished explainer. Keep the first-person, the false starts, the specific frustrations. This is the antidote to AI-flat prose, not a license to reintroduce the AI tells listed below.
 
 - **Title:** lowercase-after-the-first-word, no em-dash subtitle, no "X Was the Y" / "X — When Y" subtitle formulas. A colon is allowed but use it very sparingly (at most one post in a batch). Avoid generic "Building X" / "How I Built X" titles too. Aim for a short noun-phrase title that says what the post is about. ("Transfer learning lost to my small CNN on FER2013", "A first LSTM in PyTorch, classifying MNIST as a sequence".)
 - **Open with the thesis or the surprising result**, not setup or background. The first paragraph usually drops the GitHub link and any cross-references to related posts.
@@ -185,11 +186,16 @@ Loaded from CDN via dynamic `import('https://cdn.jsdelivr.net/npm/motion@11.11.1
 - **Page-load transition**, `.page-content` fades + rises on every page.
 - **Home hero**, `.hero-photo-frame`, then `.hero-text .title/.subtitle` + `.hero-stack-label`, then a staggered cascade of `.tech-tile`.
 - **Post list**, `.post-list > li` spring in via Motion's `inView` (one-shot) as they scroll into view. (These used to be on the IntersectionObserver above; they moved here.)
+- **Hero photo parallax**, after the photo's entrance settles, `scroll()` scrubs `.hero-photo-frame` `y: 0 → -40` as the hero scrolls past (set up inside the entrance `.then` so it doesn't snap the spring mid-flight).
+- **Reading progress bar**, `scroll()` scrubs `.reading-progress` `scaleX: 0 → 1` across page scroll. The element is added by [_layouts/post.html](_layouts/post.html) (post pages only); the binding is a no-op elsewhere.
+- **Magnetic hover**, `.tech-tile` and `.project-button` follow the cursor on `pointermove` (direct transform write) and spring back on `pointerleave`. Fine-pointer devices only (`(pointer: fine)`); the spring-back clears the inline transform on completion so the CSS `:hover` lift returns.
+
+A third, JS-free piece: the ambient gold glow (`.bg-glow`, added in [_layouts/default.html](_layouts/default.html)) drifts continuously via a CSS `@keyframes` (`glow-drift`, gated on `prefers-reduced-motion`). It's a compositor-only `transform`, not a Motion target.
 
 Gotchas to respect:
 - **Failure / reduced-motion safety:** a 2.5s fallback (and the `.catch`) removes `.js-motion`, reverting everything to its visible resting state if the CDN module never loads. Reduced-motion users bail before the import, Motion is never even fetched. Don't break this; never leave an element hidden only by JS with no fallback.
 - **Inline-style cleanup:** Motion leaves inline `transform`/`opacity` on the elements it animates, and inline styles beat stylesheet `:hover` rules. The tech-tile cascade therefore strips its inline transforms on completion so `.tech-tile:hover { transform: … }` keeps working. If you animate any element that also has a CSS hover/active transform, do the same cleanup (and re-pin `opacity:1` rather than clearing it, since the `.js-motion` rule still sets `opacity:0`).
-- Add new Motion targets to the `.js-motion …` hide list in [css/main.scss](css/main.scss) too, or they'll flash before animating.
+- Add new **entrance** Motion targets (things that start hidden and spring in) to the `.js-motion …` hide list in [css/main.scss](css/main.scss) too, or they'll flash before animating. **Don't** add ongoing-interaction targets (parallax, magnetic hover, the progress bar) to that list — they're visible at rest and must not depend on JS to appear.
 
 Intensity is tuned to "confident & noticeable" (visible spring bounce, longer stagger). Dial `bounce`/`visualDuration`/`stagger` in [_includes/head.html](_includes/head.html) to taste.
 
@@ -241,5 +247,5 @@ Not "feat:" prefixed, not Conventional Commits. Keep it to one line where possib
 - **Don't reintroduce Font Awesome / Bootstrap**, the design specifically dropped them. CSS has explicit rules zeroing out leftover `.fa-stack` and `.social-media-list i`.
 - **Don't widen the content column** without asking, `$content-width: 640px` is a deliberate reading-width choice.
 - **Respect `prefers-reduced-motion`**, wrap any new motion in `@media (prefers-reduced-motion: no-preference)` like the existing code does.
-- **Keep `_sass/` edits to a minimum**, they're easy to write and easy to have no visible effect because `main.scss` overrides them.
+- **All styling goes in `css/main.scss`.** There is no `_sass/` partials tree anymore; don't expect Jekyll to pick up partials unless you re-create `_sass/` and `@import` them.
 - **`_config.yml` `baseurl`** is empty (site hosted at root). Don't add a baseurl unless the hosting changes.
