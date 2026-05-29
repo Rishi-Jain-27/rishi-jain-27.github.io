@@ -101,12 +101,12 @@ A standard backprop chain has the same shape, \\( \prod_l \mathrm{diag}(f'(z_l))
 
 ## A worked vanishing-gradient example
 
-The bound becomes much more visceral with numbers. Take \\( f = \tanh \\), so \\( |f'(z)| \le 1 \\) with equality only at \\( z = 0 \\). In practice \\( \tanh \\) saturates fast, and on a trained recurrent net the typical entry of \\( f'(z_i) \\) sits around 0.5 or lower. The network needs the saturated regime to make non-trivial decisions.
+The bound becomes much more visceral with numbers. Take \\( f = \tanh \\), so \\( \lvert f^\prime(z) \rvert \le 1 \\) with equality only at \\( z = 0 \\). In practice \\( \tanh \\) saturates fast, and on a trained recurrent net the typical entry of \\( f^\prime(z_i) \\) sits around 0.5 or lower. The network needs the saturated regime to make non-trivial decisions.
 
 Suppose the recurrent weight matrix has \\( \sigma_1(W) = 0.9 \\). The per-step Jacobian norm is bounded by
 
 \\[
-\left\\| \mathrm{diag}(f'(z_i)) \right\\| \cdot \left\\| W \right\\| \le \underbrace{0.5}\_{\text{typical } f'} \cdot \underbrace{0.9}\_{\sigma_1(W)} = 0.45.
+\left\\| \mathrm{diag}(f^\prime(z_i)) \right\\| \cdot \left\\| W \right\\| \le \underbrace{0.5}\_{\text{typical } f^\prime} \cdot \underbrace{0.9}\_{\sigma_1(W)} = 0.45.
 \\]
 
 After unrolling 100 steps,
