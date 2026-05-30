@@ -112,6 +112,10 @@ print(f"AB angle: {angle_ab:.1f} degrees")   # 15.0
 print(f"AC angle: {angle_ac:.1f} degrees")   # 59.5
 ```
 
+The numbers above are 3D, but the geometry is the same in 2D. Drag either arrow below and watch the dot product, norms, and angle update live: pull them close together and the cosine climbs toward 1, push them apart and it falls.
+
+{% include viz/vectors.html a="4,1" b="1,3" %}
+
 ## Linear systems and Gaussian elimination
 
 Instead of writing out linear equations one by one, pack them into \\( Ax = b \\):
