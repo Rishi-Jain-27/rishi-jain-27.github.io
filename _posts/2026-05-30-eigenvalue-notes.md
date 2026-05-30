@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "The directions a matrix doesn't turn"
+title: "Eigenvectors: vectors for which a matrix doesn't cause a change in direction"
 author: "Rishi Jain"
 date: 2026-05-30
 categories: notes
@@ -57,8 +57,6 @@ The direction is preserved, but the length need not be. An **eigenvalue** is the
 - \\( \lvert \lambda \rvert < 1 \\): squished toward the origin.
 - \\( \lambda < 0 \\): flipped 180°, and scaled by \\( \lvert \lambda \rvert \\).
 - \\( \lambda = 0 \\): collapsed onto the origin (the whole eigenspace maps to the zero vector).
-
-(My raw notes had \\( \lambda = 0 \\) as a 180° flip, which is wrong. Zero is the collapse case; negative is the flip.)
 
 ## The characteristic equation
 
