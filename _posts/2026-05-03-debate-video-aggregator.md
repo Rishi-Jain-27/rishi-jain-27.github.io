@@ -6,9 +6,11 @@ date: 2026-05-03
 categories: projects
 project_url: https://debate-search.com
 project_label: Visit
+code_url: https://github.com/Rishi-Jain-27/debate-search
+code_label: Code
 ---
 
-Coaches tell debaters to watch more rounds. The problem is that the rounds live across hundreds of YouTube channels (camp uploads, tournament archives, individual playlists) with no central index and no real way to know in advance which ones are worth two hours of your evening. So I built one, at [debate-search.com](https://debate-search.com).
+Coaches tell debaters to watch more rounds. The problem is that the rounds live across hundreds of YouTube channels (camp uploads, tournament archives, individual playlists) with no central index and no real way to know in advance which ones are worth two hours of your evening. So I built one, at [debate-search.com](https://debate-search.com). The code is on [GitHub](https://github.com/Rishi-Jain-27/debate-search).
 
 ## What it does
 

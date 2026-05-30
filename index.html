@@ -126,6 +126,7 @@ layout: default
         <h2>
           <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
           {% if post.project_url %}<a class="project-button" href="{{ post.project_url }}" target="_blank" rel="noopener noreferrer" title="Open project: {{ post.project_url }}">{{ post.project_label | default: "Open" }} <span class="project-button-arrow" aria-hidden="true">↗</span></a>{% endif %}
+          {% if post.code_url %}<a class="project-button" href="{{ post.code_url }}" target="_blank" rel="noopener noreferrer" title="View code: {{ post.code_url }}">{{ post.code_label | default: "Code" }} <span class="project-button-arrow" aria-hidden="true">↗</span></a>{% endif %}
         </h2>
         <section class="post-excerpt" itemprop="description">
           <p>{{ post.content | strip_html | truncatewords: 50 }}</p>
