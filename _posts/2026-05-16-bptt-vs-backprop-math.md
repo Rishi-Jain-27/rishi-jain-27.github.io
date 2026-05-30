@@ -20,7 +20,7 @@ z_l = W_l \, a_{l-1} + b_l, \qquad a_l = f(z_l).
 The backward pass is one application of the chain rule. Define the error signal \\( \delta_l = \partial L / \partial z_l \\). Then
 
 \\[
-\delta_l = \left( W_{l+1}^\top \delta_{l+1} \right) \odot f'(z_l), \qquad \frac{\partial L}{\partial W_l} = \delta_l \, a_{l-1}^\top.
+\delta_l = \left( W_{l+1}^\top \delta_{l+1} \right) \odot f^\prime(z_l), \qquad \frac{\partial L}{\partial W_l} = \delta_l \, a_{l-1}^\top.
 \\]
 
 One forward, one backward, one independent gradient per layer. \\( W_1 \\) and \\( W_2 \\) are different matrices that get independently updated. The depth of the unrolled chain is the depth of the model, typically 10 to 50 layers.
@@ -74,7 +74,7 @@ The middle term \\( \partial h_t / \partial h_k \\) is the heart of BPTT. By the
 Each factor is a derivative we can compute directly. Differentiating \\( h_i = f(W h_{i-1} + U x_i + b) \\) with respect to \\( h_{i-1} \\), using that \\( f \\) is applied elementwise:
 
 \\[
-\frac{\partial h_i}{\partial h_{i-1}} = \mathrm{diag}\\!\left( f'(z_i) \right) \, W.
+\frac{\partial h_i}{\partial h_{i-1}} = \mathrm{diag}\\!\left( f^\prime(z_i) \right) \, W.
 \\]
 
 (In the backward-pass view, the gradient flowing from \\( h_t \\) to \\( h_k \\) multiplies by the transpose of this product. Singular values are invariant under transpose, so the operator-norm analysis below is identical either way.)
@@ -84,20 +84,20 @@ Each factor is a derivative we can compute directly. Differentiating \\( h_i = f
 Substituting the single-step form:
 
 \\[
-\frac{\partial h_t}{\partial h_k} = \prod_{i=k+1}^{t} \mathrm{diag}\\!\left( f'(z_i) \right) \, W.
+\frac{\partial h_t}{\partial h_k} = \prod_{i=k+1}^{t} \mathrm{diag}\\!\left( f^\prime(z_i) \right) \, W.
 \\]
 
 Take the operator norm and use submultiplicativity:
 
 \\[
-\left\\| \frac{\partial h_t}{\partial h_k} \right\\| \le \prod_{i=k+1}^{t} \left\\| \mathrm{diag}\\!\left( f'(z_i) \right) \right\\| \cdot \left\\| W \right\\|.
+\left\\| \frac{\partial h_t}{\partial h_k} \right\\| \le \prod_{i=k+1}^{t} \left\\| \mathrm{diag}\\!\left( f^\prime(z_i) \right) \right\\| \cdot \left\\| W \right\\|.
 \\]
 
-That product is the whole problem. The same \\( W \\) every step. If the largest singular value \\( \sigma_1(W) \\) times the saturating factor from \\( f' \\) is reliably less than 1, the product shrinks geometrically in the gap \\( (t - k) \\). A gradient from step 100 contributing back to step 0 has been multiplied through roughly 100 copies of a contractive matrix. It arrives at zero. Vanishing gradient.
+That product is the whole problem. The same \\( W \\) every step. If the largest singular value \\( \sigma_1(W) \\) times the saturating factor from \\( f^\prime \\) is reliably less than 1, the product shrinks geometrically in the gap \\( (t - k) \\). A gradient from step 100 contributing back to step 0 has been multiplied through roughly 100 copies of a contractive matrix. It arrives at zero. Vanishing gradient.
 
 If the product is reliably greater than 1, the same compounding runs the other direction. Exploding gradient.
 
-A standard backprop chain has the same shape, \\( \prod_l \mathrm{diag}(f'(z_l)) \, W_l \\), but every \\( W_l \\) is a different matrix. Their singular values don't compound as cleanly, and the depth is the model depth, not the sequence length. The math is identical. The brutality is not.
+A standard backprop chain has the same shape, \\( \prod_l \mathrm{diag}(f^\prime(z_l)) \, W_l \\), but every \\( W_l \\) is a different matrix. Their singular values don't compound as cleanly, and the depth is the model depth, not the sequence length. The math is identical. The brutality is not.
 
 ## A worked vanishing-gradient example
 
@@ -117,7 +117,7 @@ After unrolling 100 steps,
 
 That number is below `float32` precision (`~1.2e-38`) and well below `float16`. The gradient isn't small, it's gone. No floating-point system in standard use can represent it without underflow.
 
-Flip the inequality the other way: \\( \sigma_1(W) = 1.2 \\), and assume the model has learned to keep \\( f' \\) near 1 in the operating regime. Then
+Flip the inequality the other way: \\( \sigma_1(W) = 1.2 \\), and assume the model has learned to keep \\( f^\prime \\) near 1 in the operating regime. Then
 
 \\[
 \left\\| \frac{\partial h_{50}}{\partial h_0} \right\\| \le 1.2^{50} \approx 9100,
@@ -179,4 +179,4 @@ You lose the gradient contribution from dependencies longer than \\( K \\), but 
 
 ## Takeaway
 
-Backprop through time is backprop. The chain rule doesn't change. What changes is that the parameter being differentiated against shows up many times in the computation graph, and that the graph is unrolled to whatever depth the sequence length forces. Every characteristic complaint about RNN training (vanishing gradients, exploding gradients, gradient clipping, LSTM and GRU gates, truncated windows, the difficulty of long-range dependencies) is downstream of two equations: the sum over every use of \\( W \\), and the product of single-step Jacobians \\( \prod \mathrm{diag}(f'(z_i)) \, W \\). With those two in hand, the rest of the recurrent-net curriculum stops looking like a grab-bag of tricks and starts looking like a sequence of reasonable responses to the same underlying product.
+Backprop through time is backprop. The chain rule doesn't change. What changes is that the parameter being differentiated against shows up many times in the computation graph, and that the graph is unrolled to whatever depth the sequence length forces. Every characteristic complaint about RNN training (vanishing gradients, exploding gradients, gradient clipping, LSTM and GRU gates, truncated windows, the difficulty of long-range dependencies) is downstream of two equations: the sum over every use of \\( W \\), and the product of single-step Jacobians \\( \prod \mathrm{diag}(f^\prime(z_i)) \, W \\). With those two in hand, the rest of the recurrent-net curriculum stops looking like a grab-bag of tricks and starts looking like a sequence of reasonable responses to the same underlying product.
