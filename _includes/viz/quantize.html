@@ -1,0 +1,248 @@
+<!-- Interactive symmetric-quantization widget: drag the float weights along the
+     line and watch them snap onto the integer grid. Switch between INT8 and INT4
+     to coarsen the grid; drag one weight far out to create an outlier and watch
+     the scale blow up and the rest collapse onto a handful of buckets.
+     Theme-matched to the site tokens. Self-contained and dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/quantize.html weights="1.2,-3.5,0.8,2.1,-1.9,3.5" bits="4" %}{% endraw %}
+     weights / bits are optional. -->
+{% assign _w = include.weights | default: "1.2,-3.5,0.8,2.1,-1.9,3.5" %}
+{% assign _bits = include.bits | default: "4" %}
+<figure class="quant-viz" data-weights="{{ _w }}" data-bits="{{ _bits }}">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Bit width">
+      <button type="button" data-bits-btn="8">INT8</button>
+      <button type="button" data-bits-btn="4">INT4</button>
+      <button type="button" data-bits-btn="3">INT3</button>
+    </div>
+    <button type="button" class="quant-viz-outlier" data-outlier>spike an outlier</button>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="A number line of float weights snapping onto a discrete integer grid. Drag the gold dots to move the weights; the dequantized value, scale, and round-trip error update live."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>levels</b><span data-q="levels">—</span></span>
+    <span><b>|x|max</b><span data-q="amax">—</span></span>
+    <span><b>scale S</b><span data-q="scale">—</span></span>
+    <span><b>max err</b><span data-q="maxerr">—</span></span>
+    <span><b>collisions</b><span data-q="coll">—</span></span>
+  </div>
+  <figcaption>Each <span class="quant-a">●</span> is a float weight; the tick it drops onto is its dequantized value, and the red gap is the round-trip error. Drag a weight far from the others (or hit <b>spike an outlier</b>) to see one big value stretch the grid and crush the rest.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__quantVizBooted) return;
+    window.__quantVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      err: '#e08a7a', errHi: 'rgba(224,138,122,0.9)'
+    };
+    var HIT = 16;       /* px radius for grabbing a weight */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['levels', 'amax', 'scale', 'maxerr', 'coll'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-q="' + k + '"]');
+      });
+
+      var weights = (fig.dataset.weights || '').split(',').map(function (s) {
+        var v = parseFloat(s); return isFinite(v) ? v : 0;
+      });
+      var bits = parseInt(fig.dataset.bits, 10) || 4;
+
+      var w = 0, h = 0, dpr = 1, padX = 28, baseY = 0, dotY = 0;
+
+      function qmax() { return Math.pow(2, bits - 1) - 1; }
+      function qmin() { return -Math.pow(2, bits - 1); }
+      function range() {        /* visible half-range, frames the weights */
+        var m = 0;
+        for (var i = 0; i < weights.length; i++) m = Math.max(m, Math.abs(weights[i]));
+        return Math.max(m * 1.18, 1);
+      }
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 210;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        baseY = Math.round(h * 0.62);
+        dotY = Math.round(h * 0.26);
+        draw();
+      }
+
+      function toPx(x) { var R = range(); return padX + (x + R) / (2 * R) * (w - 2 * padX); }
+
+      function quant() {
+        var R = range();
+        var amax = 0;
+        for (var i = 0; i < weights.length; i++) amax = Math.max(amax, Math.abs(weights[i]));
+        var scale = amax > 0 ? amax / qmax() : 1;
+        var res = weights.map(function (x) {
+          var q = Math.round(x / scale);
+          q = Math.max(qmin(), Math.min(qmax(), q));
+          var xhat = scale * q;
+          return { x: x, q: q, xhat: xhat, err: xhat - x };
+        });
+        return { amax: amax, scale: scale, R: R, res: res };
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var info = quant();
+        var scale = info.scale, R = info.R;
+
+        /* bucket grid: every dequantized level S*q that falls inside the view */
+        var lo = Math.ceil(-R / scale), hi = Math.floor(R / scale);
+        lo = Math.max(lo, qmin()); hi = Math.min(hi, qmax());
+        var spacing = (toPx(scale) - toPx(0));
+        var drawTicks = spacing >= 3;
+        if (drawTicks) {
+          for (var q = lo; q <= hi; q++) {
+            var px = toPx(q * scale);
+            var isZero = q === 0;
+            ctx.strokeStyle = isZero ? C.axis : C.grid;
+            ctx.lineWidth = isZero ? 1.5 : 1;
+            var th = isZero ? 16 : 9;
+            ctx.beginPath();
+            ctx.moveTo(px, baseY - th); ctx.lineTo(px, baseY + th);
+            ctx.stroke();
+          }
+        }
+        /* the number line itself */
+        ctx.strokeStyle = C.rule; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(padX, baseY); ctx.lineTo(w - padX, baseY); ctx.stroke();
+
+        if (!drawTicks) {
+          ctx.fillStyle = C.dim;
+          ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(info.res.length ? (hi - lo + 1) + ' buckets in view — grid too fine to draw' : '', w / 2, baseY - 26);
+        }
+
+        /* range labels */
+        ctx.fillStyle = C.dim;
+        ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText((-R).toFixed(1), padX, baseY + 30);
+        ctx.textAlign = 'right';
+        ctx.fillText((R).toFixed(1), w - padX, baseY + 30);
+        ctx.textAlign = 'center';
+        ctx.fillText('0', toPx(0), baseY + 30);
+
+        /* tally collisions (weights sharing a quantized bucket) */
+        var counts = {};
+        info.res.forEach(function (r) { counts[r.q] = (counts[r.q] || 0) + 1; });
+
+        /* each weight: dot above, error stem down to its dequantized tick */
+        info.res.forEach(function (r) {
+          var dx = toPx(r.x), hx = toPx(r.xhat);
+          var collided = counts[r.q] > 1;
+          /* error stem: from the float dot down/over to the snapped tick */
+          ctx.strokeStyle = C.err; ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(dx, dotY + 7);
+          ctx.lineTo(hx, baseY - 1);
+          ctx.stroke();
+          /* snapped (dequantized) marker on the line */
+          ctx.fillStyle = collided ? C.err : C.accentHi;
+          ctx.beginPath();
+          ctx.moveTo(hx, baseY - 6); ctx.lineTo(hx + 5, baseY); ctx.lineTo(hx, baseY + 6); ctx.lineTo(hx - 5, baseY);
+          ctx.closePath(); ctx.fill();
+          /* the float weight, draggable */
+          ctx.beginPath(); ctx.arc(dx, dotY, 7, 0, Math.PI * 2);
+          ctx.fillStyle = C.accent; ctx.fill();
+          ctx.strokeStyle = '#1e1f2a'; ctx.lineWidth = 2; ctx.stroke();
+          /* value label */
+          ctx.fillStyle = C.muted;
+          ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(r.x.toFixed(2), dx, dotY - 12);
+        });
+
+        updateReadout(info, counts);
+      }
+
+      function updateReadout(info, counts) {
+        var maxErr = 0, coll = 0;
+        info.res.forEach(function (r) { maxErr = Math.max(maxErr, Math.abs(r.err)); });
+        Object.keys(counts).forEach(function (k) { if (counts[k] > 1) coll += counts[k]; });
+        out.levels.textContent = Math.pow(2, bits) + '  (' + qmin() + '…' + qmax() + ')';
+        out.amax.textContent = info.amax.toFixed(2);
+        out.scale.textContent = info.scale.toFixed(4);
+        out.maxerr.textContent = maxErr.toFixed(4);
+        out.coll.textContent = coll ? coll + ' weights' : 'none';
+      }
+
+      /* dragging */
+      var drag = -1;
+      function pointerX(e) { var r = canvas.getBoundingClientRect(); return e.clientX - r.left; }
+      function pointerY(e) { var r = canvas.getBoundingClientRect(); return e.clientY - r.top; }
+      canvas.addEventListener('pointerdown', function (e) {
+        var px = pointerX(e), py = pointerY(e), best = HIT, idx = -1;
+        for (var i = 0; i < weights.length; i++) {
+          var d = Math.hypot(px - toPx(weights[i]), py - dotY);
+          if (d <= best) { best = d; idx = i; }
+        }
+        if (idx >= 0) { drag = idx; canvas.setPointerCapture(e.pointerId); e.preventDefault(); }
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (drag < 0) return;
+        var R = range();
+        var gx = (pointerX(e) - padX) / (w - 2 * padX) * (2 * R) - R;
+        gx = Math.max(-R * 1.4, Math.min(R * 1.4, Math.round(gx * 10) / 10));
+        weights[drag] = gx;
+        draw();
+      });
+      function end(e) { if (drag >= 0) { try { canvas.releasePointerCapture(e.pointerId); } catch (x) {} drag = -1; } }
+      canvas.addEventListener('pointerup', end);
+      canvas.addEventListener('pointercancel', end);
+
+      /* bit-width buttons */
+      function syncButtons() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-bits-btn]'), function (btn) {
+          btn.classList.toggle('is-on', parseInt(btn.dataset.bitsBtn, 10) === bits);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-bits-btn]'), function (btn) {
+        btn.addEventListener('click', function () {
+          bits = parseInt(btn.dataset.bitsBtn, 10);
+          syncButtons(); draw();
+        });
+      });
+      var outlierBtn = fig.querySelector('[data-outlier]');
+      if (outlierBtn) outlierBtn.addEventListener('click', function () {
+        var R = range();
+        weights[weights.length - 1] = Math.round(R * 6);
+        draw();
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncButtons();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.quant-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>
