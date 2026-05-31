@@ -14,3 +14,7 @@ vendor/
 # Source material for in-progress posts — local-only, transient
 source-material/*
 !source-material/.gitkeep
+
+# Writing material
+anti-ai-writing-style.md
+
