@@ -15,6 +15,6 @@ vendor/
 source-material/*
 !source-material/.gitkeep
 
-# Writing material
-anti-ai-writing-style.md
+# Writing voice source — archived locally, integrated into CLAUDE.md
+.voice-source/
 
