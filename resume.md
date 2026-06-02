@@ -30,20 +30,16 @@ National Honor Society (Randolph W. Thrower Chapter)
     <span class="tech-chip">Python</span>
     <span class="tech-chip">JavaScript</span>
     <span class="tech-chip">Java</span>
-    <span class="tech-chip">C++</span>
     <span class="tech-chip">SQL</span>
     <span class="tech-chip">scikit-learn</span>
   </div>
   <div class="tech-stack-row">
     <span class="tech-stack-label">Frameworks</span>
-    <span class="tech-chip">React</span>
-    <span class="tech-chip">Flask</span>
     <span class="tech-chip">Node.js</span>
     <span class="tech-chip">PyTorch</span>
   </div>
   <div class="tech-stack-row">
     <span class="tech-stack-label">Tools</span>
-    <span class="tech-chip">PostgreSQL</span>
     <span class="tech-chip">Render</span>
     <span class="tech-chip">Cloudflare</span>
     <span class="tech-chip">GitHub</span>
