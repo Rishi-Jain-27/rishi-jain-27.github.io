@@ -18,3 +18,4 @@ source-material/*
 # Writing voice source — archived locally, integrated into CLAUDE.md
 .voice-source/
 
+CLAUDE.md
