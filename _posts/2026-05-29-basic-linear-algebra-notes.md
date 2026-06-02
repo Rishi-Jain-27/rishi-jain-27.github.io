@@ -7,45 +7,41 @@ categories: notes
 math: true
 ---
 
-These are my notes from working back through the basics of linear algebra, cleaned up enough to share. They follow Zachary Huang's [Give Me 30 min, I will make Linear Algebra Click Forever](https://www.youtube.com/watch?v=5oZ84mlt7tM), roughly one section per idea, with the small numerical examples worked out and a short NumPy snippet for each. Nothing past the foundations here. I wanted them written down, and they might be useful if you're making the same pass.
+I wanted to go back and pin down the basics of linear algebra properly, since so much of what I want to learn next leans on them, so these are my notes from working back through the foundations, cleaned up enough to share. They follow Zachary Huang's [Give Me 30 min, I will make Linear Algebra Click Forever](https://www.youtube.com/watch?v=5oZ84mlt7tM), roughly one section per idea, with the small numerical examples worked out and a short NumPy snippet for each. There is nothing past the foundations here, and they might be useful if you are making the same pass.
 
 ## Vectors and the dot product
 
-Start with three vectors:
+Start with three vectors,
 
 \\[
 a = [5,\, 4,\, 1], \qquad b = [4,\, 5,\, 2], \qquad c = [1,\, 2,\, 5]
 \\]
 
-Drawn from the origin, they live in 3D space:
+and drawn from the origin, they live in 3D space:
 
 ![Vectors a, b and c drawn from the origin in 3D space. a and b point in nearly the same direction; c points off on its own.](/assets/lin-alg-vectors-3d.png)
 
-\\( a \\) and \\( b \\) (gold) sit close together; \\( c \\) (blue) heads off on its own. The smaller the angle between two vectors, the more similar they are, and the dot product is what turns that into a number. It has two formulas that describe the same quantity.
+Here \\( a \\) and \\( b \\) (gold) sit close together, while \\( c \\) (blue) heads off on its own. The smaller the angle between two vectors, the more similar they are, and the dot product is what turns that similarity into a single number. It has two formulas that describe the same quantity.
 
-**Calculation formula.** Multiply matching components and add them up:
+The first is the calculation formula, which multiplies matching components and adds them up,
 
 \\[
 a \cdot b = a_1 b_1 + a_2 b_2 + a_3 b_3 + \dots + a_n b_n
 \\]
 
-**Geometric formula.** Connects the dot product to the angle \\( \theta \\) between the vectors:
+and the second is the geometric formula, which connects the dot product to the angle \\( \theta \\) between the vectors,
 
 \\[
 a \cdot b = \lVert a \rVert \, \lVert b \rVert \cos\theta
 \\]
 
-where the length (norm) of a vector is
+where the length, or norm, of a vector is
 
 \\[
 \lVert a \rVert = \sqrt{a_1^2 + a_2^2 + \dots + a_n^2}
 \\]
 
-To recover the angle, run both formulas and solve:
-
-1. Get \\( a \cdot b \\) from the calculation formula.
-2. Compute the lengths \\( \lVert a \rVert \\) and \\( \lVert b \rVert \\).
-3. Rearrange the geometric formula for \\( \theta \\):
+To recover the angle we run both formulas against each other. We get \\( a \cdot b \\) from the calculation formula, compute the two lengths \\( \lVert a \rVert \\) and \\( \lVert b \rVert \\), and then rearrange the geometric formula for \\( \theta \\),
 
 \\[
 \cos\theta = \frac{a \cdot b}{\lVert a \rVert \, \lVert b \rVert}
@@ -71,9 +67,7 @@ a \cdot b = (5)(4) + (4)(5) + (1)(2) = 20 + 20 + 2 = 42
 \theta = \arccos(0.966) \approx 15.0^\circ
 \\]
 
-Not much of an angle. \\( a \\) and \\( b \\) are similar, so \\( \theta \\) is small.
-
-Now \\( a \\) and \\( c \\), which look much less alike:
+Not much of an angle. \\( a \\) and \\( b \\) are similar, so \\( \theta \\) comes out small. Now \\( a \\) and \\( c \\), which look rather less alike:
 
 \\[
 a \cdot c = (5)(1) + (4)(2) + (1)(5) = 5 + 8 + 5 = 18
@@ -89,9 +83,7 @@ a \cdot c = (5)(1) + (4)(2) + (1)(5) = 5 + 8 + 5 = 18
 \theta = \arccos(0.507) \approx 59.5^\circ
 \\]
 
-This is cosine similarity: similar vectors give a cosine near 1 and a small angle, dissimilar ones give a smaller cosine and a wider angle.
-
-Now the same thing in code:
+This is cosine similarity: similar vectors give a cosine near 1 and a small angle, and dissimilar ones give a smaller cosine and a wider angle. The same thing in code:
 
 ```python
 import numpy as np
@@ -112,13 +104,13 @@ print(f"AB angle: {angle_ab:.1f} degrees")   # 15.0
 print(f"AC angle: {angle_ac:.1f} degrees")   # 59.5
 ```
 
-The numbers above are 3D, but the geometry is the same in 2D. Drag either arrow below and watch the dot product, norms, and angle update live: pull them close together and the cosine climbs toward 1, push them apart and it falls.
+The numbers above are 3D, but the geometry is identical in 2D. Drag either arrow below and watch the dot product, norms, and angle update live: pull them close together and the cosine climbs toward 1, push them apart and it falls.
 
 {% include viz/vectors.html a="4,1" b="1,3" %}
 
 ## Linear systems and Gaussian elimination
 
-Instead of writing out linear equations one by one, pack them into \\( Ax = b \\):
+Instead of writing out linear equations one by one, we pack them into \\( Ax = b \\):
 
 \\[
 \begin{bmatrix} 300 & 100 \\\\ 100 & 200 \end{bmatrix}
@@ -127,39 +119,33 @@ Instead of writing out linear equations one by one, pack them into \\( Ax = b \\
 \begin{bmatrix} 11000 \\\\ 8000 \end{bmatrix}
 \\]
 
-To solve it by hand, use Gaussian elimination: massage \\( A \\) into an upper-triangular shape (row echelon form) using three legal moves.
+To solve it by hand we use Gaussian elimination, massaging \\( A \\) into an upper-triangular shape (row echelon form) using three legal moves: we can swap any two rows, multiply an entire row by a non-zero number, or add a multiple of one row to another.
 
-1. Swap any two rows.
-2. Multiply an entire row by a non-zero number.
-3. Add a multiple of one row to another row.
-
-Working the system above:
-
-**1. Write the augmented matrix.**
+Working the system above, we start by writing the augmented matrix,
 
 \\[
 \left[\begin{array}{cc|c} 300 & 100 & 11000 \\\\ 100 & 200 & 8000 \end{array}\right]
 \\]
 
-**2. Simplify (move 2), dividing each row by 100.**
+then simplify by dividing each row by 100 (the second move),
 
 \\[
 \left[\begin{array}{cc|c} 3 & 1 & 110 \\\\ 1 & 2 & 80 \end{array}\right]
 \\]
 
-**3. Get a 1 in the top-left pivot, by swapping the two rows (move 1).**
+swap the two rows to put a 1 in the top-left pivot (the first move),
 
 \\[
 \left[\begin{array}{cc|c} 1 & 2 & 80 \\\\ 3 & 1 & 110 \end{array}\right]
 \\]
 
-**4. Eliminate below the pivot (move 3):** \\( R_2 \rightarrow R_2 - 3 R_1 \\).
+and eliminate below the pivot with \\( R_2 \rightarrow R_2 - 3 R_1 \\) (the third move),
 
 \\[
 \left[\begin{array}{cc|c} 1 & 2 & 80 \\\\ 0 & -5 & -130 \end{array}\right]
 \\]
 
-**5. Back-substitute.**
+which leaves the system ready to back-substitute,
 
 \\[
 -5y = -130 \quad\Rightarrow\quad y = 26
@@ -187,34 +173,25 @@ print(f"y soln: {x[1]}")   # 26.0
 
 ## Vector spaces, span, and basis
 
-The standard 2D grid is built from two building-block vectors:
+The standard 2D grid is built from two building-block vectors,
 
 \\[
 i = [1,\, 0], \qquad j = [0,\, 1]
 \\]
 
-To reach \\( (3, 4) \\), take a scaled sum:
+and to reach \\( (3, 4) \\) we take a scaled sum,
 
 \\[
 3i + 4j = (3, 4)
 \\]
 
-That's a **linear combination**. Three pieces of vocabulary fall out of it:
+That is a linear combination, and three pieces of vocabulary fall out of it. The span is the set of all points you can reach. Linear independence asks whether any move is redundant: if one vector is just a multiple of another it is linearly dependent, because it unlocks no new direction. A basis is the efficient set of moves, linearly independent (nothing redundant) and spanning the whole space (reaching everywhere).
 
-1. **Span.** The set of all points you can reach.
-2. **Linear independence.** Are any moves redundant? If one vector is just a multiple of another, it's linearly dependent, because it unlocks no new direction.
-3. **Basis.** The efficient set of moves: linearly independent (nothing redundant) and spanning the whole space (reaches everywhere).
+A few examples in the plane make the distinction concrete. The set \\( \\{[1, 0],\, [0, 1]\\} \\) spans the plane and is linearly independent, which makes it the standard basis (it is just \\( i \\) and \\( j \\)). The set \\( \\{[1, 1],\, [2, 2]\\} \\) is stuck on a line and linearly dependent, so it is not a basis at all. The set \\( \\{[1, 0],\, [0, 1],\, [1, 1]\\} \\) spans the plane but still is not a basis, since one of its vectors is redundant and the set is not efficient. And \\( \\{[1, 2],\, [3, 1]\\} \\) spans the plane and is linearly independent, so even though it is a bit skewed it is a perfectly valid basis.
 
-A few examples in the plane:
+Why does this matter? A basis lets you describe the same data from different points of view, and that is the core idea behind JPEG compression and Principal Component Analysis (PCA).
 
-1. \\( \\{[1, 0],\, [0, 1]\\} \\). Spans the plane, linearly independent. This is the standard basis (it's \\( i \\) and \\( j \\)).
-2. \\( \\{[1, 1],\, [2, 2]\\} \\). Stuck on a line, linearly dependent. Not a basis.
-3. \\( \\{[1, 0],\, [0, 1],\, [1, 1]\\} \\). Spans the plane, but not a basis: one vector is redundant, so it isn't efficient.
-4. \\( \\{[1, 2],\, [3, 1]\\} \\). Spans the plane and linearly independent. A bit skewed, but a valid basis.
-
-Why does this matter? A basis lets you describe the same data from different points of view. It's the core idea behind JPEG compression and Principal Component Analysis (PCA).
-
-**Change of basis.** Say a point sits at \\( P = [7, 5] \\) in the standard basis, and you want its coordinates in the new, skewed basis \\( b = \\{[1, 2],\, [3, 1]\\} \\). You're looking for \\( c_1 \\) and \\( c_2 \\) with
+Change of basis is the concrete version. Say a point sits at \\( P = [7, 5] \\) in the standard basis, and we want its coordinates in the new, skewed basis \\( b = \\{[1, 2],\, [3, 1]\\} \\). We are looking for \\( c_1 \\) and \\( c_2 \\) with
 
 \\[
 c_1 b_1 + c_2 b_2 = P
@@ -239,17 +216,15 @@ Same point, described in a different basis.
 
 ## Linear transformations
 
-A linear transformation is just \\( V^\prime = M V \\), where \\( V^\prime \\) is the transformed vector. The matrix \\( M \\) can rotate, shear, scale, and a lot more.
+A linear transformation is just \\( V^\prime = M V \\), where \\( V^\prime \\) is the transformed vector, and the matrix \\( M \\) can rotate, shear, scale, and a good deal more.
 
-The useful trick: you only need to watch where the basis vectors \\( i \\) and \\( j \\) land. The columns of the transformation matrix are exactly the coordinates of where the original basis vectors end up.
-
-For a 90° rotation, \\( i \\) lands at \\( [0, 1] \\) and \\( j \\) lands at \\( [-1, 0] \\), which gives
+The useful trick is that you only need to watch where the basis vectors \\( i \\) and \\( j \\) land, because the columns of the transformation matrix are exactly the coordinates of where the original basis vectors end up. For a 90° rotation, \\( i \\) lands at \\( [0, 1] \\) and \\( j \\) lands at \\( [-1, 0] \\), which gives
 
 \\[
 R = \begin{bmatrix} 0 & -1 \\\\ 1 & 0 \end{bmatrix}
 \\]
 
-Take a triangle with vertices \\( P_1 = [1, 1] \\), \\( P_2 = [3, 1] \\), \\( P_3 = [2, 2] \\) and rotate it. Transform each vertex with \\( P^\prime = R P \\):
+Take a triangle with vertices \\( P_1 = [1, 1] \\), \\( P_2 = [3, 1] \\), \\( P_3 = [2, 2] \\) and rotate it, transforming each vertex with \\( P^\prime = R P \\):
 
 \\[
 P_1^\prime = \begin{bmatrix} -1 \\\\ 1 \end{bmatrix}, \qquad
@@ -262,7 +237,6 @@ Plot the before and after and the whole triangle has turned 90°.
 ```python
 import numpy as np
 
-# 90 degree rotation matrix
 R = np.array([
     [0, -1],
     [1,  0]
@@ -271,7 +245,7 @@ P = np.array([
     [1, 3, 2],   # x coords
     [1, 1, 2]    # y coords
 ])
-P_transformed = R @ P   # @ is matrix multiply
+P_transformed = R @ P
 
 print(f"Original:\n{P}")
 print(f"Transformed:\n{P_transformed}")
@@ -279,37 +253,23 @@ print(f"Transformed:\n{P_transformed}")
 
 ## Determinants
 
-The determinant is the area scaling factor of a transformation. For a 2×2 matrix, it's the area of the parallelogram that the unit square gets mapped into:
+The determinant is the area scaling factor of a transformation. For a 2×2 matrix it is the area of the parallelogram that the unit square gets mapped into,
 
 \\[
 \text{unit square, area } 1 \quad\longrightarrow\quad \lvert \det(M) \rvert
 \\]
 
-That single number tells you a lot:
+and that single number tells you a surprising amount. A determinant of 1 means areas are preserved exactly, a determinant of 2 means the transformation doubles every area, and a negative determinant means the orientation of space gets flipped. A determinant of 0 is the interesting one: area has collapsed to zero, the matrix has squished the whole world onto a line or a point, a dimension is lost, and the transformation is irreversible. Such a matrix is called singular, or non-invertible.
 
-- \\( \det(M) = 1 \\): areas are preserved exactly.
-- \\( \det(M) = 2 \\): the transformation doubles every area.
-- \\( \det(M) < 0 \\): the orientation of space gets flipped.
-- \\( \det(M) = 0 \\): area collapses to zero, the matrix has squished the world onto a line or a point. A dimension is lost and the transformation is irreversible. Such a matrix is called singular, or non-invertible.
-
-For a 2×2 matrix the calculation is short:
+For a 2×2 matrix the calculation is short,
 
 \\[
 A = \begin{bmatrix} a & b \\\\ c & d \end{bmatrix}, \qquad \det(A) = ad - bc
 \\]
 
-A few transformations through that lens:
+and a few transformations seen through that lens make it concrete. The 90° rotation \\( R = \begin{bmatrix} 0 & -1 \\\\ 1 & 0 \end{bmatrix} \\) has \\( \det(R) = 1 \\), so rotation preserves area perfectly. The scaling matrix \\( S = \begin{bmatrix} 2 & 0 \\\\ 0 & 3 \end{bmatrix} \\) has \\( \det(S) = 6 \\), so it multiplies every area by 6. The singular matrix \\( C = \begin{bmatrix} 1 & 2 \\\\ 2 & 4 \end{bmatrix} \\) has \\( \det(C) = 0 \\), so it collapses area onto a line.
 
-1. The 90° rotation \\( R = \begin{bmatrix} 0 & -1 \\\\ 1 & 0 \end{bmatrix} \\) has \\( \det(R) = 1 \\). Rotation preserves area perfectly.
-2. The scaling matrix \\( S = \begin{bmatrix} 2 & 0 \\\\ 0 & 3 \end{bmatrix} \\) has \\( \det(S) = 6 \\). It multiplies every area by 6.
-3. The singular matrix \\( C = \begin{bmatrix} 1 & 2 \\\\ 2 & 4 \end{bmatrix} \\) has \\( \det(C) = 0 \\). It collapses area onto a line.
-
-A small diagnostic toolkit:
-
-- \\( \det(A) \neq 0 \\): \\( A \\) is invertible, the transformation can be reversed.
-- \\( \det(A) = 0 \\): \\( A \\) is singular, space is squashed to a lower dimension.
-- \\( \det(AB) = \det(A)\det(B) \\): the scaling factor of two combined transformations is the product of their individual factors.
-- \\( \det(A^{-1}) = \dfrac{1}{\det(A)} \\).
+The determinant doubles as a small diagnostic toolkit. When \\( \det(A) \neq 0 \\) the matrix is invertible and the transformation can be reversed, and when \\( \det(A) = 0 \\) it is singular and space has been squashed to a lower dimension. Two more facts are worth keeping around: \\( \det(AB) = \det(A)\det(B) \\), so the scaling factor of two combined transformations is the product of their individual factors, and \\( \det(A^{-1}) = \dfrac{1}{\det(A)} \\).
 
 ```python
 import numpy as np
@@ -324,10 +284,4 @@ print(f"det(R): {det_R}")   # 1.0
 
 ## What's next
 
-These notes stop at the foundations. The next three on my list:
-
-- Eigenvectors
-- PCA
-- SVD
-
-They build straight on the dot product, change of basis, and determinant ideas here, which is why I wanted the basics pinned down first.
+These notes stop at the foundations. The next three on my list are eigenvectors, PCA, and SVD, and they build straight on the dot product, change of basis, and determinant ideas here, which is why I wanted the basics pinned down first.
