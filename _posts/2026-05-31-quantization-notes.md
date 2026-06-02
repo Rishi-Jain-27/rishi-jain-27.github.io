@@ -130,6 +130,10 @@ The \\( 1.2 \\) rounds away to nothing, and so does everything else in the norma
 
 The problem is using a single scale for the whole tensor, so the fix is to shrink the territory each scale is responsible for, until an outlier can only poison its own small neighborhood. This is granularity, and it comes in three increasingly fine settings. Per-tensor quantization uses one \\( S \\) for the entire matrix, which is the cheapest option and, as we just saw, the one where a single outlier ruins everything. Per-channel quantization uses one \\( S \\) per row, which is the INT8 standard, so an outlier corrupts only its own row and leaves the others clean. Group-wise quantization goes finer still, splitting each row into blocks of 64 or 128 and giving each block its own \\( S \\). This is the 4-bit standard, with the most isolation, paid for by storing a great many more scale factors.
 
+{% include viz/granularity.html %}
+
+Laid out on the same matrix the three settings come apart cleanly. Per-tensor draws one box around everything, so the blown-out scale reaches every cell. Per-channel cuts that box into rows, and the outlier can only spoil the row it actually sits in. Per-group cuts each row again into blocks, so the damage shrinks to the single block that holds the spike, with everything around it quantizing as if the outlier were never there. The cost is the mirror image of the benefit: one scale, then three, then six, and in a real tensor with blocks of 64 or 128 that scale count runs into the thousands.
+
 Per-channel in NumPy is a single `axis` argument, taking the max along each row instead of over the whole array:
 
 ```python
@@ -195,6 +199,10 @@ There are two strategies, and which one you reach for depends on whether you qua
 Post-training quantization, PTQ, is the default for almost everyone. We start from the trained FP16 model, run a calibration pass of perhaps a hundred samples to observe the min and max ranges of the activations and pick good scales, then quantize and save. It takes minutes on a single GPU, needs no access to the full training set (which is a quiet privacy win), and with group-wise quantization the accuracy loss is close to negligible.
 
 Quantization-aware training, QAT, is the heavier option, for when that residual loss is still too large, or when the application cannot tolerate even a minor drop in accuracy. During fine-tuning we insert fake quantization, where in the forward pass each weight is rounded to INT and immediately cast back to FP32, injecting the exact rounding noise the deployed model will eventually see. The weights are damaged slightly on purpose, and because this is happening inside a training loop, gradient descent adapts them to absorb that very damage.
+
+{% include viz/ptq-vs-qat.html %}
+
+The difference comes down to where the rounding sits relative to the training loop, which is what the diagram above is really about: PTQ waits until the weights are frozen and then quantizes once, whereas QAT folds the rounding into every forward pass so the optimiser sees it coming and compensates before anything is frozen.
 
 Put plainly, PTQ is the low-effort path: you point it at a trained model and run it, it wants only a tiny calibration set and a few minutes of compute, and it covers the modern LLMs almost everyone is actually deploying, the Llamas and GPTs of the world. QAT is a full training pipeline that wants the entire training set and days of GPU-hours, and it earns its keep on edge and vision models, or when you are pushing all the way down to INT4.
 
