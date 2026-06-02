@@ -301,6 +301,49 @@ table tbody tr:nth-child(even) td {
 .hero-text { min-width: 0; flex: 1 1 auto; }
 .hero-text .title { margin-bottom: 0.2em; }
 
+/* Connect row (email + LinkedIn) under the hero subtitle */
+.hero-connect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+}
+.connect-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.32em 0.7em;
+  font-family: $font-mono;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: $accent;
+  background: rgba($accent, 0.08);
+  border: 1px solid rgba($accent, 0.35) !important;
+  border-radius: 999px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.connect-button:hover {
+  color: $bg;
+  background: $accent-hi;
+  border-color: $accent-hi !important;
+  transform: translateY(-1px);
+}
+.connect-icon {
+  font-size: 0.9em;
+  line-height: 1;
+  opacity: 0.85;
+}
+.connect-arrow {
+  font-size: 0.9em;
+  transition: transform 160ms ease;
+}
+.connect-button:hover .connect-arrow {
+  transform: translate(1px, -1px);
+}
+
 .hero-photo-frame {
   flex: 0 0 auto;
   display: block;
@@ -725,6 +768,7 @@ table tbody tr:nth-child(even) td {
   .js-motion .hero-photo-frame,
   .js-motion .hero-text .title,
   .js-motion .hero-text .subtitle,
+  .js-motion .hero-connect,
   .js-motion .hero-stack-label,
   .js-motion .tech-tile,
   .js-motion .post-list > li {

@@ -12,7 +12,7 @@ exclude:
 # Site settings
 title: Rishi Jain
 subtitle: "Welcome to my personal website"
-email: ""
+email: "27rishijainpersonalemail@gmail.com"
 name: Rishi Jain
 description: >
   Rishi Jain's personal website and blog.
@@ -74,7 +74,7 @@ social:
   - name: LinkedIn
     icon: linkedin
     username: Rishi Jain
-    url: ""
+    url: "https://www.linkedin.com/in/rishi-jain-14a98a405/"
     desc: Connect with me on LinkedIn
     share: false
 
