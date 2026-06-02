@@ -1,0 +1,247 @@
+<!-- Interactive backprop-through-time gradient widget: set the per-step Jacobian
+     factor gamma = sigma_1(W) * |f'| with the knob (or a regime preset), and
+     watch the gradient-norm bound gamma^n decay or explode across n steps back
+     through time, drawn on a log axis with the float32 underflow floor marked.
+     gamma < 1 vanishes, gamma = 1 holds flat, gamma > 1 explodes. The whole
+     point of the post in one picture.
+     Reuses the .quant-viz theme classes from css/main.scss. Self-contained.
+
+     Usage in a post:  {% raw %}{% include viz/gradient-through-time.html %}{% endraw %} -->
+<figure class="quant-viz gtt-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Regime preset">
+      <button type="button" data-gtt-preset="0.45">vanishing</button>
+      <button type="button" data-gtt-preset="1.0">stable</button>
+      <button type="button" data-gtt-preset="1.2">exploding</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Sequence length">
+      <button type="button" data-gtt-steps="25">T=25</button>
+      <button type="button" data-gtt-steps="50">T=50</button>
+      <button type="button" data-gtt-steps="100">T=100</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="A log-scale plot of the gradient-norm bound gamma to the power n across n steps back through time. Drag the knob along the top track to change the per-step factor gamma. Below one the curve decays toward the float32 underflow floor (vanishing gradient), at one it stays flat, above one it climbs (exploding gradient)."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>γ = σ₁·|f′|</b><span data-gtt="gamma">—</span></span>
+    <span><b>steps T</b><span data-gtt="steps">—</span></span>
+    <span><b>bound γ^T</b><span data-gtt="bound">—</span></span>
+    <span><b>verdict</b><span data-gtt="verdict">—</span></span>
+  </div>
+  <figcaption>The per-step factor <span class="quant-a">γ</span> is the largest singular value of <span class="quant-a">W</span> times the typical <span class="quant-a">|f′|</span>. Drag the knob along the top track. Each step back through time multiplies the gradient by another <span class="quant-a">γ</span>, so the bound is <span class="quant-a">γ<sup>n</sup></span>: below 1 it falls through the <span style="color:#e08a7a">float32 floor</span> and vanishes, at 1 it rides flat, above 1 it explodes.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__gttVizBooted) return;
+    window.__gttVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      err: '#e08a7a', errHi: 'rgba(224,138,122,0.9)'
+    };
+    var FLOOR = 1.2e-38;           /* smallest normal float32 */
+    var GMIN = 0.2, GMAX = 1.6;    /* knob travel for gamma */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['gamma', 'steps', 'bound', 'verdict'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-gtt="' + k + '"]');
+      });
+
+      var gamma = 0.45;            /* per-step Jacobian factor */
+      var T = 50;                  /* sequence length / unrolled depth */
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 52, padR = 18, padTop = 56, padBot = 34;
+      var trackY = 30, trackX0 = 0, trackX1 = 0;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 320;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        trackX0 = padL; trackX1 = w - padR;
+        draw();
+      }
+
+      /* log10 axis: top is 10^TOP, bottom is the float32 floor */
+      function topExp() { return Math.max(2, Math.ceil(T * Math.log10(GMAX)) + 1); }
+      function botExp() { return Math.floor(Math.log10(FLOOR)); }   /* -38 */
+
+      function yOfExp(e) {
+        var t = topExp(), b = botExp();
+        return padTop + (t - e) / (t - b) * (h - padTop - padBot);
+      }
+      function xOfStep(n) {
+        return padL + (n / T) * (w - padL - padR);
+      }
+      function gammaToKnobX(g) {
+        return trackX0 + (g - GMIN) / (GMAX - GMIN) * (trackX1 - trackX0);
+      }
+      function knobXToGamma(px) {
+        var g = GMIN + (px - trackX0) / (trackX1 - trackX0) * (GMAX - GMIN);
+        return Math.max(GMIN, Math.min(GMAX, Math.round(g * 100) / 100));
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var t = topExp(), b = botExp();
+        var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+        /* horizontal gridlines every few decades + labels */
+        ctx.font = mono;
+        ctx.textAlign = 'right';
+        for (var e = t; e >= b; e -= (t - b > 24 ? 6 : 3)) {
+          var gy = yOfExp(e);
+          ctx.strokeStyle = (e === 0) ? C.axis : C.grid;
+          ctx.lineWidth = (e === 0) ? 1.4 : 1;
+          ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(w - padR, gy); ctx.stroke();
+          ctx.fillStyle = (e === 0) ? C.muted : C.dim;
+          ctx.fillText(e === 0 ? '1' : '1e' + e, padL - 6, gy + 3.5);
+        }
+
+        /* float32 underflow floor */
+        var fy = yOfExp(b);
+        ctx.strokeStyle = C.err; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(padL, fy); ctx.lineTo(w - padR, fy); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.err; ctx.textAlign = 'left';
+        ctx.fillText('float32 floor', padL + 4, fy - 5);
+
+        /* the gamma^n curve, clamped at the floor */
+        var lg = Math.log10(gamma);
+        ctx.beginPath();
+        var started = false, underAt = -1;
+        for (var n = 0; n <= T; n++) {
+          var exp = n * lg;                 /* log10(gamma^n) */
+          var clamped = Math.max(exp, b);
+          var px = xOfStep(n), py = yOfExp(clamped);
+          if (!started) { ctx.moveTo(px, py); started = true; } else { ctx.lineTo(px, py); }
+          if (underAt < 0 && exp < b) underAt = n;
+        }
+        var explodes = gamma > 1.0000001, vanishes = gamma < 0.9999999;
+        var line = explodes ? C.errHi : (vanishes ? C.accent : C.accentHi);
+        ctx.strokeStyle = line; ctx.lineWidth = 2.4; ctx.stroke();
+
+        /* shade the region that underflowed to zero */
+        if (underAt >= 0) {
+          var ux = xOfStep(underAt);
+          ctx.fillStyle = 'rgba(224,138,122,0.12)';
+          ctx.fillRect(ux, padTop, (w - padR) - ux, h - padTop - padBot);
+          ctx.strokeStyle = 'rgba(224,138,122,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(ux, padTop); ctx.lineTo(ux, h - padBot); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = C.err; ctx.textAlign = 'center'; ctx.font = mono;
+          ctx.fillText('gradient = 0 past step ' + underAt, Math.min(ux + 88, w - padR - 4), padTop + 14);
+        }
+
+        /* endpoint marker */
+        var endExp = Math.max(T * lg, b);
+        ctx.beginPath(); ctx.arc(xOfStep(T), yOfExp(endExp), 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = line; ctx.fill();
+
+        /* x-axis labels */
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+        ctx.fillText('0', padL, h - padBot + 16);
+        ctx.fillText(T + ' steps back', (padL + w - padR) / 2, h - padBot + 16);
+        ctx.textAlign = 'right';
+        ctx.fillText(String(T), w - padR, h - padBot + 16);
+
+        /* the gamma knob track at the top */
+        ctx.strokeStyle = C.rule; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(trackX0, trackY); ctx.lineTo(trackX1, trackY); ctx.stroke();
+        /* gamma = 1 marker on the track */
+        var oneX = gammaToKnobX(1.0);
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(oneX, trackY - 7); ctx.lineTo(oneX, trackY + 7); ctx.stroke();
+        ctx.fillStyle = C.dim; ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.textAlign = 'center'; ctx.fillText('1', oneX, trackY - 11);
+        /* knob */
+        var kx = gammaToKnobX(gamma);
+        ctx.beginPath(); ctx.arc(kx, trackY, 8, 0, Math.PI * 2);
+        ctx.fillStyle = line; ctx.fill();
+        ctx.strokeStyle = '#1e1f2a'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = C.fg; ctx.font = mono; ctx.textAlign = 'center';
+        ctx.fillText('γ = ' + gamma.toFixed(2), kx, trackY - 13);
+
+        updateReadout(explodes, vanishes);
+      }
+
+      function updateReadout(explodes, vanishes) {
+        var boundExp = T * Math.log10(gamma);
+        var boundStr;
+        if (boundExp < -300) boundStr = '~0 (underflow)';
+        else if (boundExp > 12) boundStr = Math.pow(10, boundExp).toExponential(1);
+        else boundStr = Math.pow(gamma, T).toPrecision(3);
+        out.gamma.textContent = gamma.toFixed(2);
+        out.steps.textContent = String(T);
+        out.bound.textContent = boundStr;
+        out.verdict.textContent = explodes ? 'exploding' : (vanishes ? 'vanishing' : 'stable');
+      }
+
+      /* drag the knob (grab anywhere along the track row) */
+      var drag = false;
+      function px(e) { var r = canvas.getBoundingClientRect(); return e.clientX - r.left; }
+      function py(e) { var r = canvas.getBoundingClientRect(); return e.clientY - r.top; }
+      canvas.addEventListener('pointerdown', function (e) {
+        var x = px(e), y = py(e);
+        if (Math.abs(y - trackY) <= 20 || Math.abs(x - gammaToKnobX(gamma)) <= 16) {
+          drag = true; gamma = knobXToGamma(x); canvas.setPointerCapture(e.pointerId);
+          e.preventDefault(); draw();
+        }
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (!drag) return; gamma = knobXToGamma(px(e)); draw();
+      });
+      function end(e) { if (drag) { try { canvas.releasePointerCapture(e.pointerId); } catch (x) {} drag = false; } }
+      canvas.addEventListener('pointerup', end);
+      canvas.addEventListener('pointercancel', end);
+
+      /* preset + step buttons */
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-gtt-preset]'), function (btn) {
+        btn.addEventListener('click', function () {
+          gamma = parseFloat(btn.dataset.gttPreset); draw();
+        });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-gtt-steps]'), function (btn) {
+        btn.addEventListener('click', function () {
+          T = parseInt(btn.dataset.gttSteps, 10);
+          syncSteps(); resize();
+        });
+      });
+      function syncSteps() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-gtt-steps]'), function (btn) {
+          btn.classList.toggle('is-on', parseInt(btn.dataset.gttSteps, 10) === T);
+        });
+      }
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncSteps();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.gtt-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

@@ -8,56 +8,24 @@ project_url: https://github.com/Rishi-Jain-27/pytorch-learning
 project_label: Code
 ---
 
-Before [the MNIST classifier]({% post_url 2026-05-12-mnist-classifier-first-pytorch-project %}) and [the FER2013 classifier]({% post_url 2026-05-14-fer2013-classifier-when-transfer-learning-loses %}), there were five Jupyter notebooks. They're homework, not a project, but the project posts that came after don't make much sense without them. The notebooks are on [GitHub](https://github.com/Rishi-Jain-27/pytorch-learning).
-
-They are my pass through Daniel Bourke's *Learn PyTorch for Deep Learning* course, one notebook per chapter:
-
-1. **Fundamentals.** Tensors and the three things that go wrong with them.
-2. **Workflow.** The full data → model → train → save loop on a one-feature regression problem.
-3. **Classification.** Binary, then multi-class, with the non-linearity reveal in the middle.
-4. **Computer Vision.** FashionMNIST through a linear baseline, a non-linear baseline, and a CNN.
-5. **Custom Datasets.** Loading images from disk, TinyVGG, and data augmentation.
-
-About four weeks of evenings between April 15 and May 9.
+Before [the MNIST classifier]({% post_url 2026-05-12-mnist-classifier-first-pytorch-project %}) and [the FER2013 classifier]({% post_url 2026-05-14-fer2013-classifier-when-transfer-learning-loses %}) there were five Jupyter notebooks, which are homework rather than a project, though the project posts that came after do not make much sense without them sitting underneath. The notebooks are on [GitHub](https://github.com/Rishi-Jain-27/pytorch-learning), and they are my pass through Daniel Bourke's Learn PyTorch for Deep Learning course, roughly one notebook per chapter. The first is Fundamentals, on tensors and the three things that go wrong with them; the second is Workflow, the full data to model to train to save loop on a one-feature regression problem; the third is Classification, binary and then multi-class with the non-linearity reveal sitting in the middle of it; the fourth is Computer Vision, working FashionMNIST through a linear baseline and a non-linear baseline and finally a CNN; and the fifth is Custom Datasets, loading images off disk into TinyVGG with some data augmentation. It came to about four weeks of evenings between the 15th of April and the 9th of May.
 
 ## Typing, not watching
 
-The method mattered more than the content. I typed every cell, including the imports, the print statements, and the cell-level comments I half-disagreed with, instead of cloning the repo and hitting Shift+Enter. That's slower by a factor of five. It is also the only way I personally retain anything technical.
-
-Watching someone build a training loop is like watching someone parallel park. You nod along, the move looks obvious, and then you sit in the driver's seat and can't remember which way to turn the wheel. Typing the loop yourself is what gets it into your hands.
-
-The notebooks have my fingerprints on them. Typos in comments, paraphrased explanations where the original phrasing didn't land, off-by-one notes to myself ("nomenclature: scalar and vector lowercase. matrix and tensor uppercase."). Those are the bits that survived past the last cell.
+The method mattered more here than the content did. I typed out every cell, the imports and the print statements and even the cell-level comments I half-disagreed with, rather than cloning the repo and hitting Shift+Enter down the page, which is slower by roughly a factor of five and is also the only way I personally retain anything technical at all. Watching someone build a training loop is a bit like watching someone parallel park, in that you nod along and the move looks obvious right up until you are in the driver's seat and cannot for the life of you remember which way the wheel turns. Typing the loop out yourself is what gets it into your hands. The notebooks have my fingerprints all over them as a result, the typos in comments and the paraphrased explanations where the original phrasing did not land and the off-by-one notes to myself ("nomenclature: scalar and vector lowercase. matrix and tensor uppercase."), and those scraps are the bits that survived past the last cell.
 
 ## The three things that go wrong
 
-If I forget everything else from notebook 00, I want to keep this. Almost every PyTorch error in the first month is one of three things:
-
-1. **Wrong datatype.** `torch.mean` on an int tensor. `float16` × `float32` getting silently promoted. Default dtype coming in as `float64` because the data went through NumPy first. `tensor.dtype`.
-2. **Wrong shape.** A `(3, 2) @ (3, 2)` matmul that needs a transpose. A 4D image tensor where the model expects 3D. A `squeeze` you forgot. `tensor.shape`.
-3. **Wrong device.** Tensor on CPU, model on GPU. A `.numpy()` call on a CUDA tensor. `tensor.device`.
-
-This isn't deep but it's most of the skill of reading a PyTorch traceback for a while. Print all three. Find the mismatch. Move on.
+If I forget everything else from the fundamentals notebook I would like to keep this, because almost every PyTorch error in the first month turns out to be one of three things. The first is a wrong datatype, a `torch.mean` called on an int tensor, or a `float16` quietly promoted against a `float32`, or a default dtype arriving as `float64` because the data went through NumPy on the way in, all of which `tensor.dtype` will show you. The second is a wrong shape, a `(3, 2) @ (3, 2)` matmul that wanted a transpose, or a 4D image tensor handed to a model expecting 3D, or a `squeeze` you forgot to apply, all of which `tensor.shape` will show you. The third is a wrong device, a tensor on the CPU while the model sits on the GPU, or a `.numpy()` call on a CUDA tensor, which `tensor.device` will show you. None of that is deep, and for a good while it is most of the skill of reading a PyTorch traceback: print all three, find the mismatch, and carry on.
 
 ## The inflection points
 
-A few moments in the notebooks where the lights went on.
-
-**Linear stacks can only fit lines.** Notebook 02 has you train a model with three `Linear` layers on a circles dataset. It plateaus at 50% accuracy, chance. You add a single `ReLU` between the layers and the decision boundary suddenly bends and the model hits 99%. Reading "non-linear activations let you fit non-linear functions" is one thing. Watching the boundary uncurl in matplotlib is another.
-
-**Convolutions are just a smaller multiplication.** Notebook 03 walks `nn.Conv2d` and `nn.MaxPool2d` shape by shape with `(1, 1, 28, 28)` test inputs, and you can see the spatial dimension halve at each pool. There is no magic, just a kernel sliding across a tensor and a stride that decides how far it jumps. By the time `Conv2d` shows up in a real model in notebook 04, it's a known quantity.
-
-**Best-epoch, not last-epoch.** Notebook 03 saves the model with the lowest test loss across the whole run, not whatever happened to be in memory when the loop exited. That single pattern became `save_best_model` in the MNIST project and carried straight into FER2013. It's two lines of code and it's the difference between "I trained this once" and "I trained this and saved the right one."
+A few moments in the notebooks were where the lights actually went on. The first was that linear stacks can only ever fit lines. The workflow notebook has you train a model of three `Linear` layers on a circles dataset and it plateaus at 50% accuracy, which is chance, and then you drop a single `ReLU` between the layers and the decision boundary suddenly bends and the model climbs to 99%. Reading "non-linear activations let you fit non-linear functions" is one thing, and watching the boundary uncurl in matplotlib is quite another. The second was that convolutions are just a smaller multiplication. The classification notebook walks `nn.Conv2d` and `nn.MaxPool2d` through shape by shape on `(1, 1, 28, 28)` test inputs, and you watch the spatial dimension halve at every pool, and there is no magic anywhere in it, only a kernel sliding across a tensor and a stride deciding how far it jumps, so that by the time `Conv2d` shows up in a real model in the next notebook it is already a known quantity. The third was best-epoch rather than last-epoch, the notebook saving the model with the lowest test loss across the whole run instead of whatever happened to be in memory when the loop exited, which is the pattern that became `save_best_model` in the MNIST project and carried straight on into FER2013. It is two lines of code, and it is the difference between "I trained this once" and "I trained this and kept the right one."
 
 ## What didn't stick the first time
 
-Honest accounting: typing it out is not the same as understanding it. Things I had to come back and re-derive when the real projects started:
-
-- **Logits → probabilities → labels.** I wrote the chain three times in notebook 02 and still applied softmax twice in my MNIST head the first time around. `CrossEntropyLoss` already applies it internally. You feed it raw logits. The notebook said this. I did not internalize it.
-- **Channels-first vs. channels-last.** PyTorch wants `(N, C, H, W)`. Everything else (PIL, NumPy, matplotlib) wants `(H, W, C)`. The `permute(2, 0, 1)` trick is in the fundamentals notebook and I still hit a shape error on it in FER2013.
-- **Class imbalance.** Not in any of the notebooks. The course assumes balanced datasets. The first real-world dataset I touched (FER2013) had a 16× imbalance between Happy and Disgust, and I had to learn `WeightedRandomSampler` from the docs on the fly.
-
-The course doesn't claim to cover everything. The point is that it covers enough surface to make the gaps visible. You can't ask the right question on Stack Overflow if you don't know which thing is missing.
+Honest accounting, since typing a thing out is not the same as understanding it, and there were a few things I had to come back and re-derive once the real projects started. The logits to probabilities to labels chain is the first, which I wrote out three separate times in the workflow notebook and then still managed to apply softmax twice in my MNIST head the first time around, because `CrossEntropyLoss` already applies it internally and wants raw logits, a fact the notebook stated plainly and I simply did not internalise. The channels-first against channels-last business is the second, where PyTorch wants `(N, C, H, W)` and everything else, PIL and NumPy and matplotlib, wants `(H, W, C)`, and the `permute(2, 0, 1)` trick that fixes it sits right there in the fundamentals notebook and I still walked straight into a shape error on it in FER2013. The third is class imbalance, which is in none of the notebooks at all, because the course quietly assumes balanced datasets, and the first real dataset I touched had a 16× imbalance between Happy and Disgust and I had to learn `WeightedRandomSampler` from the docs on the fly. The course does not claim to cover everything, and the point is rather that it covers enough surface to make the gaps visible, since you cannot ask the right question on Stack Overflow if you do not yet know which thing is missing.
 
 ## Takeaway
 
-The course gets a lot of skepticism online ("tutorials are a trap," "just build something"). That's right in spirit and wrong in practice for someone who has never written a training loop. You cannot build the thing if you do not know what shape it should be. Five notebooks of deliberate typing is what gave me the shape. The two project posts that came after are what filled it in.
+The course attracts a fair amount of skepticism online, the "tutorials are a trap" and "just go build something" line, which is right in spirit and wrong in practice for someone who has never written a training loop, because you cannot build the thing if you do not yet know what shape it is meant to be. Five notebooks of deliberate typing is what gave me the shape, and the two project posts that came after are what filled it in.

@@ -1,0 +1,85 @@
+<!-- Static SVG contrasting a feedforward net (distinct weight matrices W1, W2, W3,
+     one independent gradient each) with an RNN unrolled across time (the SAME W
+     reused at every step, so the gradient at W is the sum over every use). This
+     is "twist one" of the post: shared weights mean summed gradients.
+     Theme-matched to the site tokens. Self-contained, no dependencies.
+     Usage in a post:  {% raw %}{% include viz/unrolled-weights.html %}{% endraw %} -->
+<figure class="flow-viz">
+  <svg viewBox="0 0 820 300" role="img"
+       aria-label="Top row: a feedforward net with activations a0 through a3 joined by three different weight matrices W1, W2, W3, each receiving one independent gradient. Bottom row: the same chain for an RNN unrolled across time, hidden states h0 through h3, but every arrow is the same matrix W reused at each step, so the gradient at W is the sum of its contribution at every step.">
+    <defs>
+      <marker id="uw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#797a85"/>
+      </marker>
+      <marker id="uw-arrow-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#d4af7a"/>
+      </marker>
+    </defs>
+    <g font-family="ui-monospace, Menlo, monospace">
+
+      <!-- ===================== feedforward ===================== -->
+      <text x="24" y="40" font-size="13" fill="#adadba">feedforward: every layer has its own matrix</text>
+      <g font-size="13" fill="#f0f0f5" text-anchor="middle">
+        <circle cx="90"  cy="78" r="22" fill="#292a36" stroke="#363745"/>
+        <circle cx="290" cy="78" r="22" fill="#292a36" stroke="#363745"/>
+        <circle cx="490" cy="78" r="22" fill="#292a36" stroke="#363745"/>
+        <circle cx="690" cy="78" r="22" fill="#292a36" stroke="#363745"/>
+        <text x="90"  y="83">a₀</text>
+        <text x="290" y="83">a₁</text>
+        <text x="490" y="83">a₂</text>
+        <text x="690" y="83">a₃</text>
+      </g>
+      <g stroke="#797a85" stroke-width="1.6" marker-end="url(#uw-arrow)">
+        <line x1="114" y1="78" x2="266" y2="78"/>
+        <line x1="314" y1="78" x2="466" y2="78"/>
+        <line x1="514" y1="78" x2="666" y2="78"/>
+      </g>
+      <g font-size="13" fill="#adadba" text-anchor="middle">
+        <text x="190" y="68">W₁</text>
+        <text x="390" y="68">W₂</text>
+        <text x="590" y="68">W₃</text>
+      </g>
+      <text x="410" y="118" text-anchor="middle" font-size="11" fill="#797a85">three different matrices · one independent gradient each</text>
+
+      <!-- divider -->
+      <line x1="24" y1="150" x2="796" y2="150" stroke="#363745" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- ===================== RNN unrolled ===================== -->
+      <text x="24" y="184" font-size="13" fill="#d4af7a">RNN unrolled in time: one matrix, reused every step</text>
+      <!-- inputs feeding in from below -->
+      <g stroke="#4a4b5a" stroke-width="1.3" marker-end="url(#uw-arrow)">
+        <line x1="90"  y1="278" x2="90"  y2="248"/>
+        <line x1="290" y1="278" x2="290" y2="248"/>
+        <line x1="490" y1="278" x2="490" y2="248"/>
+        <line x1="690" y1="278" x2="690" y2="248"/>
+      </g>
+      <g font-size="11" fill="#797a85" text-anchor="middle">
+        <text x="90"  y="293">x₀</text>
+        <text x="290" y="293">x₁</text>
+        <text x="490" y="293">x₂</text>
+        <text x="690" y="293">x₃</text>
+      </g>
+      <g font-size="13" fill="#f0f0f5" text-anchor="middle">
+        <circle cx="90"  cy="226" r="22" fill="#292a36" stroke="#d4af7a"/>
+        <circle cx="290" cy="226" r="22" fill="#292a36" stroke="#d4af7a"/>
+        <circle cx="490" cy="226" r="22" fill="#292a36" stroke="#d4af7a"/>
+        <circle cx="690" cy="226" r="22" fill="#292a36" stroke="#d4af7a"/>
+        <text x="90"  y="231">h₀</text>
+        <text x="290" y="231">h₁</text>
+        <text x="490" y="231">h₂</text>
+        <text x="690" y="231">h₃</text>
+      </g>
+      <g stroke="#d4af7a" stroke-width="1.8" marker-end="url(#uw-arrow-gold)">
+        <line x1="114" y1="226" x2="266" y2="226"/>
+        <line x1="314" y1="226" x2="466" y2="226"/>
+        <line x1="514" y1="226" x2="666" y2="226"/>
+      </g>
+      <g font-size="13" fill="#ebc999" text-anchor="middle">
+        <text x="190" y="216">W</text>
+        <text x="390" y="216">W</text>
+        <text x="590" y="216">W</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>Both chains are the same shape, and standard backprop runs on both. The difference is the labels on the arrows: the feedforward net has three distinct matrices, so each picks up one gradient, whereas the unrolled RNN reuses the single <span class="flow-a">W</span> at every step, so the gradient at <span class="flow-a">W</span> is the sum of its contribution at every step it was used.</figcaption>
+</figure>
