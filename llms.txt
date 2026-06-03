@@ -1,0 +1,36 @@
+# Rishi Jain | ML Researcher & Engineer
+
+## Professional Summary
+ML Researcher and Engineer specializing in Mechanistic Interpretability, Reinforcement Learning, and high-performance language modeling. Passionate about building scalable AI systems and advancing foundational research in neural architectures.
+
+## Core Technical Stack
+* **Languages:** Python, Java, JavaScript
+* **ML Frameworks:** PyTorch, Hugging Face Transformers
+* **Infrastructure:** Vercel, Cloudflare, Neon Databases
+* **Methodologies:** Retrieval Augmented Generation (RAG), Mechanistic Interpretability, Reinforcement Learning, Transformer Architecture
+
+## Featured Projects
+
+### Hindi-English Translator
+An end-to-end Neural Machine Translation system implemented from scratch.
+* **Key Features:** Custom RoPE (Rotary Positional Embeddings), Multi-Head Attention (MHA), and optimized beam-search decoding.
+* **Tech:** PyTorch, Hugging Face Transformers.
+* **Link:** [View on Hugging Face](https://huggingface.co/Rishi-Jain-27)
+
+### DebateSearch
+An AI-integrated platform for the competitive debate community that aggregates and recommends high-level debate rounds for coaches and researchers.
+* **Tech:** JavaScript, SQL, Neon Databases, Vercel, Cloudflare.
+
+### RAG Support Ticket Triage Agent
+An intelligent agent designed for automated customer support ticket resolution.
+* **Tech:** RAG, Vector Databases, Scikit-learn.
+
+## Connect
+* **GitHub:** [https://github.com/Rishi-Jain-27](https://github.com/Rishi-Jain-27)
+* **LinkedIn:** [https://www.linkedin.com/in/rishi-jain-14a98a405/](https://www.linkedin.com/in/rishi-jain-14a98a405/)
+* **Portfolio:** [https://rishi-jain-27.github.io/](https://rishi-jain-27.github.io/)
+* **Hugging Face:** [https://huggingface.co/Rishi-Jain-27](https://huggingface.co/Rishi-Jain-27)
+
+## Contact
+* **Name:** Rishi
+* **Email:** 27rishijainpersonalemail@gmail.com
