@@ -7,7 +7,7 @@ ML Researcher and Engineer specializing in Mechanistic Interpretability, Reinfor
 * **Languages:** Python, Java, JavaScript
 * **ML Frameworks:** PyTorch, Hugging Face Transformers
 * **Infrastructure:** Vercel, Cloudflare, Neon Databases
-* **Methodologies:** Retrieval Augmented Generation (RAG), Mechanistic Interpretability, Reinforcement Learning, Transformer Architecture
+* **Methodologies:** Retrieval Augmented Generation (RAG), Mechanistic Interpretability, Reinforcement Learning
 
 ## Featured Projects
 
