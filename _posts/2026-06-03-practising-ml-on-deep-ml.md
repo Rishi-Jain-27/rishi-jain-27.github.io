@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Practising ML on Deep-ML, and fixing one of its problems"
+title: "Practicing ML on Deep-ML, and fixing one of its problems"
 author: "Rishi Jain"
 date: 2026-06-03
 categories: projects
@@ -9,7 +9,7 @@ project_label: Visit
 math: true
 ---
 
-After a few months of working through PyTorch notebooks and first projects I wanted somewhere to practise the smaller pieces in isolation, the kind of thing that hides inside a library call and that you never really implement yourself: a dot product written out by hand, k-fold cross-validation, PCA, a decision tree split. The site I kept coming back to is [Deep-ML](https://www.deep-ml.com/), which is a LeetCode-shaped collection of machine-learning problems where you write a Python function in the browser and it runs against a set of test cases, except that the problems are the actual mechanics of ML rather than two-pointer puzzles dressed up in ML vocabulary. I ended up liking it enough to record a handful of walkthrough videos for it, and then liking it enough to go fix one of the problems when I found it was wrong, which is the part of this post I find more interesting than the recommendation itself.
+After a few months of working through PyTorch notebooks and first projects I wanted somewhere to practice the smaller pieces in isolation, the kind of thing that hides inside a library call and that you never really implement yourself: a dot product written out by hand, k-fold cross-validation, PCA, a decision tree split. The site I kept coming back to is [Deep-ML](https://www.deep-ml.com/), which is a LeetCode-shaped collection of machine-learning problems where you write a Python function in the browser and it runs against a set of test cases, except that the problems are the actual mechanics of ML rather than two-pointer puzzles dressed up in ML vocabulary. I ended up liking it enough to record a handful of walkthrough videos for it, and then liking it enough to go fix one of the problems when I found it was wrong, which is the part of this post I find more interesting than the recommendation itself.
 
 ## What the site is
 
@@ -59,4 +59,4 @@ What made this more than a one-line solution patch is that the hidden tests had 
 
 ## Takeaway
 
-Practising by solving a problem teaches you the algorithm. Practising by repairing a broken one teaches you the algorithm and then asks you to prove it, because you cannot fix what you only half understand, and the cost of being wrong is a public pull request rather than a green checkmark only you ever see. Deep-ML is a good site for the first kind of practice and an unusually good one for the second, purely because the whole thing is open and the bugs are right there waiting for someone who reads carefully enough to notice them.
+Practicing by solving a problem teaches you the algorithm. Practicing by repairing a broken one teaches you the algorithm and then asks you to prove it, because you cannot fix what you only half understand, and the cost of being wrong is a public pull request rather than a green checkmark only you ever see. Deep-ML is a good site for the first kind of practice and an unusually good one for the second, purely because the whole thing is open and the bugs are right there waiting for someone who reads carefully enough to notice them.
