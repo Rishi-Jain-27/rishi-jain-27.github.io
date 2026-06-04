@@ -1,0 +1,262 @@
+<!-- Jargon-free intuition pump for the overestimation bias. A fixed true number
+     (10) is guessed by n friends, each guess = 10 + uniform noise on [-c, c].
+     We always keep the LARGEST guess. No single guess is biased (each averages
+     to 10), but the largest of several averages above 10 by exactly c(n-1)/(n+1).
+     Top panel: one round, bars are the guesses measured from the true line, the
+     biggest is marked. Bottom panel: running average of "the biggest guess"
+     climbing off the true value and settling on the dashed bias line. Reuses the
+     .quant-viz theme classes from css/main.scss. Self-contained, dependency-free.
+     Usage in a post:  {% raw %}{% include viz/luckiest-guess.html %}{% endraw %} -->
+<figure class="quant-viz luck-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Number of guessers">
+      <button type="button" data-luck-n="2">2 guessers</button>
+      <button type="button" data-luck-n="4">4 guessers</button>
+      <button type="button" data-luck-n="8">8 guessers</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="How wobbly each guess is">
+      <button type="button" data-luck-c="1">a little wobble</button>
+      <button type="button" data-luck-c="2">more wobble</button>
+      <button type="button" data-luck-c="4">a lot of wobble</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Sampling">
+      <button type="button" data-luck-draw>guess once</button>
+      <button type="button" data-luck-run>guess 1000×</button>
+      <button type="button" data-luck-reset>reset</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="Two stacked panels. The top shows one round: every guesser tries to guess the true number ten, each guess drawn as a bar that pokes above or below the true line by a random wobble, and the largest guess is marked. The bottom panel plots the running average of the largest guess over all the rounds played: it climbs above the true value of ten and settles on a dashed line at ten plus c times (n minus one) over (n plus one), the amount by which always-keeping-the-biggest overshoots."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>rounds</b><span data-luck="n">0</span></span>
+    <span><b>true number</b><span data-luck="true">10.00</span></span>
+    <span><b>avg of biggest guess</b><span data-luck="avg" style="color:#d4af7a">—</span></span>
+    <span><b>overshoot</b><span data-luck="bias" style="color:#e08a7a">—</span></span>
+  </div>
+  <figcaption>Every guesser is trying to name the same true number, <span class="quant-a">10</span>, and each one is honest: their wobble is just as likely to land above 10 as below, so any single guess averages to 10 exactly. The catch is that we keep only the <span style="color:#ebc999">biggest</span> guess each round, and the biggest of several honest guesses is the one that happened to wobble up the most, so its running average drifts above 10 and settles on <span style="color:#e08a7a">10 + c(n−1)/(n+1)</span>. More guessers or more wobble both widen the overshoot, and not one guesser ever had to be wrong on average for it to appear.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__luckVizBooted) return;
+    window.__luckVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999', err: '#e08a7a'
+    };
+
+    var TRUE = 10;   /* the number everyone is guessing */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['n', 'true', 'avg', 'bias'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-luck="' + k + '"]');
+      });
+
+      var n = 4;        /* number of guessers */
+      var c = 2;        /* wobble half-width: each guess = TRUE + U[-c, c] */
+      var N = 0;        /* rounds played */
+      var sumMax = 0;
+      var hist = [];    /* running mean of the biggest guess */
+      var guesses = [], biggest = 0;   /* last round */
+
+      function bias() { return c * (n - 1) / (n + 1); }
+
+      function reset() { N = 0; sumMax = 0; hist = []; guesses = []; biggest = 0; }
+
+      function playRound() {
+        var best = -Infinity, bi = 0;
+        guesses = [];
+        for (var i = 0; i < n; i++) {
+          var g = TRUE + (Math.random() * 2 - 1) * c;
+          guesses.push(g);
+          if (g > best) { best = g; bi = i; }
+        }
+        biggest = bi;
+        N++; sumMax += best;
+        if (hist.length < 4000) hist.push(sumMax / N);
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 52, padR = 16;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 376;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      function clampY(y, lo, hi) { return Math.max(lo, Math.min(hi, y)); }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        drawTop();
+        drawBottom();
+        updateReadout();
+      }
+
+      /* ---------- top panel: one round ---------- */
+      function drawTop() {
+        var x0 = padL, x1 = w - padR;
+        var tTop = 22, tBot = 172, tTrue = 100, tHalf = 64;
+        var vmax = c * 1.08;
+        var sc = tHalf / vmax;
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('one round', x0, tTop - 4);
+
+        /* true-value line */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x0, tTrue); ctx.lineTo(x1, tTrue); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.font = monoSm;
+        ctx.fillText('true number = 10', x1, tTrue - 5);
+
+        if (!guesses.length) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('press “guess once” to play a round', (x0 + x1) / 2, tTrue + 26);
+          return;
+        }
+
+        var slot = (x1 - x0) / n;
+        var bw = Math.min(slot * 0.42, 42);
+        for (var i = 0; i < n; i++) {
+          var xc = x0 + slot * (i + 0.5);
+          var isMax = (i === biggest);
+          var dev = guesses[i] - TRUE;
+          var topY = clampY(tTrue - dev * sc, tTop, tBot);
+          ctx.fillStyle = isMax ? 'rgba(235,201,153,0.34)' : 'rgba(212,175,122,0.12)';
+          ctx.strokeStyle = isMax ? C.accentHi : C.accent; ctx.lineWidth = isMax ? 2 : 1.2;
+          var by = Math.min(tTrue, topY), bh = Math.abs(topY - tTrue);
+          ctx.fillRect(xc - bw / 2, by, bw, bh);
+          ctx.strokeRect(xc - bw / 2, by, bw, bh);
+          /* the guessed number above each bar */
+          ctx.fillStyle = isMax ? C.accentHi : C.dim; ctx.font = monoSm; ctx.textAlign = 'center';
+          ctx.fillText(guesses[i].toFixed(1), xc, (dev >= 0 ? by - 5 : by + bh + 12));
+          ctx.fillStyle = C.dim;
+          ctx.fillText('#' + (i + 1), xc, tBot + 14);
+        }
+
+        /* mark the kept (biggest) guess */
+        var mx = x0 + slot * (biggest + 0.5);
+        var keepY = clampY(tTrue - (guesses[biggest] - TRUE) * sc, tTop, tBot);
+        ctx.strokeStyle = C.accentHi; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(mx - bw / 2 - 6, keepY); ctx.lineTo(mx + bw / 2 + 6, keepY); ctx.stroke();
+        ctx.fillStyle = C.accentHi; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('we keep ' + guesses[biggest].toFixed(2), Math.min(mx + bw / 2 + 10, x1 - 96), keepY - 6);
+      }
+
+      /* ---------- bottom panel: running average ---------- */
+      function drawBottom() {
+        var x0 = padL, x1 = w - padR;
+        var bTop = 222, bBot = 356, bTrue = 318, bHigh = 240;
+        /* axis spans from the true value up to a touch above the bias */
+        var span = Math.max(bias() * 1.25, 0.4);
+        function yOf(v) {  /* v measured as overshoot above TRUE */
+          return clampY(bTrue - (v / span) * (bTrue - bHigh), bTop, bBot);
+        }
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('running average of the biggest guess, over ' + N + ' rounds', x0, bTop - 6);
+
+        /* true-value line */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(x0, bTrue); ctx.lineTo(x1, bTrue); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.font = monoSm; ctx.textAlign = 'right';
+        ctx.fillText('10', x0 - 6, bTrue + 3.5);
+
+        /* bias line */
+        var by = yOf(bias());
+        ctx.strokeStyle = C.err; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, by); ctx.lineTo(x1, by); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.err; ctx.textAlign = 'right';
+        ctx.fillText('settles at 10 + ' + bias().toFixed(2), x1, by - 5);
+
+        if (hist.length < 1) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('the average builds up here', (x0 + x1) / 2, bTrue - 26);
+          return;
+        }
+
+        var L = hist.length;
+        var stride = Math.max(1, Math.floor(L / (x1 - x0)));
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.beginPath();
+        var started = false;
+        for (var j = 0; j < L; j += stride) {
+          var px = x0 + (L > 1 ? (j / (L - 1)) : 0) * (x1 - x0);
+          var py = yOf(hist[j] - TRUE);
+          if (!started) { ctx.moveTo(px, py); started = true; } else { ctx.lineTo(px, py); }
+        }
+        var ex = x1, ey = yOf(hist[L - 1] - TRUE);
+        ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = C.accent; ctx.fill();
+      }
+
+      function updateReadout() {
+        out.n.textContent = String(N);
+        out.avg.textContent = N ? (sumMax / N).toFixed(3) : '—';
+        out.bias.textContent = N ? ('+' + (sumMax / N - TRUE).toFixed(3)) : '—';
+      }
+
+      /* ---------- controls ---------- */
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-luck-n]'), function (b) {
+          b.classList.toggle('is-on', parseInt(b.dataset.luckN, 10) === n);
+        });
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-luck-c]'), function (b) {
+          b.classList.toggle('is-on', parseFloat(b.dataset.luckC) === c);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-luck-n]'), function (b) {
+        b.addEventListener('click', function () {
+          n = parseInt(b.dataset.luckN, 10); reset(); syncToggles(); draw();
+        });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-luck-c]'), function (b) {
+        b.addEventListener('click', function () {
+          c = parseFloat(b.dataset.luckC); reset(); syncToggles(); draw();
+        });
+      });
+      fig.querySelector('[data-luck-draw]').addEventListener('click', function () { playRound(); draw(); });
+      fig.querySelector('[data-luck-run]').addEventListener('click', function () {
+        for (var k = 0; k < 1000; k++) playRound();
+        draw();
+      });
+      fig.querySelector('[data-luck-reset]').addEventListener('click', function () { reset(); draw(); });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      for (var s = 0; s < 200; s++) playRound();   /* a warm start so panels aren't empty */
+      playRound();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.luck-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

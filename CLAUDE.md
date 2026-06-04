@@ -273,6 +273,8 @@ bundle exec jekyll serve   # → http://localhost:4000
 
 ## Commit style
 
+**Never `git commit` or `git push` yourself.** Make the file changes, then stop and let Rishi review and commit/push. Even when he says "commit and push," prepare the change and hand it back rather than running the git commands.
+
 Short, present-tense, action-first (not Conventional Commits). E.g. "Add scroll-reveal fade-up for post-list items and h2 sections". One line where possible. Look at recent commits before writing one.
 
 ## Things to be careful with

@@ -1,0 +1,274 @@
+<!-- Why the dueling value stream is pinned with the mean and not the max. Four
+     action values drift smoothly over training (four thin curves). The value the
+     network is forced to learn is, under the mean rule, the average of the four
+     (a smooth gold curve), and under the max rule, the largest of the four (a red
+     curve with sharp corners wherever the best action changes). The corners are
+     the value stream's target teleporting; the smooth gold line is why the mean
+     rule trains calmly. Scrub or play the cursor to watch the two values move as
+     the curves cross. Reuses the .quant-viz theme classes from css/main.scss.
+     Self-contained, dependency-free.
+     Usage in a post:  {% raw %}{% include viz/duel-stability.html %}{% endraw %} -->
+<figure class="quant-viz duelstab-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="How much actions matter">
+      <button type="button" data-stab-preset="matters">actions matter</button>
+      <button type="button" data-stab-preset="barely">actions barely matter</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Playback">
+      <button type="button" data-stab-play>play</button>
+      <button type="button" data-stab-reset>reset</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="A plot over training steps. Four thin curves are the four action values, drifting smoothly and crossing one another. A smooth gold curve traces the mean of the four, which is the value the dueling network learns under the mean rule. A red curve traces the largest of the four, which is the value under the max rule, and it has sharp corners wherever the best action changes, since the largest curve switches from following one action to another. A vertical cursor can be dragged or played across; a readout reports the current best action, how many times the best action changes across the whole run, and the two values."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>best action now</b><span data-stab="top" style="color:#ebc999">—</span></span>
+    <span><b>times the best flips</b><span data-stab="flips" style="color:#e08a7a">—</span></span>
+    <span><b>V under mean</b><span data-stab="vmean" style="color:#d4af7a">—</span></span>
+    <span><b>V under max</b><span data-stab="vmax" style="color:#e08a7a">—</span></span>
+  </div>
+  <figcaption>The four thin lines are the action values <span class="quant-a">Q(s,a)</span>, drifting as the network trains and crossing one another as it changes its mind about which action is best. The <span style="color:#d4af7a">mean</span> of the four is what the value stream learns under the rule dueling actually uses, and it glides; the <span style="color:#e08a7a">largest</span> of the four is what it would learn under the max rule, and it snaps to a new corner every time the best action changes, dragging the value stream's target with it. Early in training the best action flips constantly, so the max rule asks the value stream to chase a target that keeps jumping, which is the whole reason the calmer mean is preferred. Try “actions barely matter”: the curves bunch together, both lines flatten, and the difference shrinks to almost nothing.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__duelStabBooted) return;
+    window.__duelStabBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999', err: '#e08a7a'
+    };
+
+    /* four smoothly drifting action-value curves: base + amp*sin(2*pi*f*t + ph) */
+    var BASE = 5;
+    var CURVES_MATTER = [
+      { a: 1.7, f: 1.0, p: 0.0 },
+      { a: 1.4, f: 1.4, p: 1.1 },
+      { a: 1.8, f: 0.7, p: 2.3 },
+      { a: 1.3, f: 1.7, p: 4.0 }
+    ];
+    var SAMPLES = 480;
+    var TAU = Math.PI * 2;
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['top', 'flips', 'vmean', 'vmax'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-stab="' + k + '"]');
+      });
+      var reduce = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var ampScale = 1;     /* 1 = actions matter, small = barely matter */
+      var cursor = 0;       /* t in [0, 1] */
+      var playing = false;
+      var rafId = null;
+
+      function qAt(i, t) {
+        var cu = CURVES_MATTER[i];
+        return BASE + ampScale * cu.a * Math.sin(TAU * cu.f * t + cu.p);
+      }
+      function allAt(t) {
+        var v = [];
+        for (var i = 0; i < 4; i++) v.push(qAt(i, t));
+        return v;
+      }
+      function meanOf(v) { return (v[0] + v[1] + v[2] + v[3]) / 4; }
+      function argmaxOf(v) {
+        var m = -Infinity, mi = 0;
+        for (var i = 0; i < v.length; i++) if (v[i] > m) { m = v[i]; mi = i; }
+        return mi;
+      }
+      function flipCount() {
+        var prev = -1, flips = 0;
+        for (var s = 0; s <= SAMPLES; s++) {
+          var am = argmaxOf(allAt(s / SAMPLES));
+          if (prev !== -1 && am !== prev) flips++;
+          prev = am;
+        }
+        return flips;
+      }
+
+      /* dynamic value axis with a little padding */
+      function bounds() {
+        var lo = Infinity, hi = -Infinity;
+        for (var s = 0; s <= SAMPLES; s++) {
+          var v = allAt(s / SAMPLES);
+          for (var i = 0; i < 4; i++) { if (v[i] < lo) lo = v[i]; if (v[i] > hi) hi = v[i]; }
+        }
+        var pad = (hi - lo) * 0.12 + 0.05;
+        return { lo: lo - pad, hi: hi + pad };
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 44, padR = 92, padT = 30, padB = 30;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 320;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var x0 = padL, x1 = w - padR, yT = padT, yB = h - padB;
+        var bd = bounds();
+        function xOf(t) { return x0 + t * (x1 - x0); }
+        function yOf(v) { return yB - (v - bd.lo) / (bd.hi - bd.lo) * (yB - yT); }
+
+        /* value grid */
+        ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+        ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'right';
+        var step = (bd.hi - bd.lo) > 3 ? 1 : 0.5;
+        var t0 = Math.ceil(bd.lo / step) * step;
+        for (var g = t0; g <= bd.hi; g += step) {
+          var gy = yOf(g);
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillText(g.toFixed(step < 1 ? 1 : 0), x0 - 6, gy + 3.5);
+        }
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('training steps →', x0, yT - 12);
+
+        /* four thin action-value curves */
+        for (var i = 0; i < 4; i++) {
+          ctx.strokeStyle = 'rgba(173,173,186,0.5)'; ctx.lineWidth = 1; ctx.beginPath();
+          for (var s = 0; s <= SAMPLES; s++) {
+            var t = s / SAMPLES, px = xOf(t), py = yOf(qAt(i, t));
+            if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'left';
+          ctx.fillText('a' + (i + 1), x1 + 5, yOf(qAt(i, 1)) + 3.5);
+        }
+
+        /* max curve (red, with corners) */
+        ctx.strokeStyle = C.err; ctx.lineWidth = 2.2; ctx.beginPath();
+        for (var s2 = 0; s2 <= SAMPLES; s2++) {
+          var t2 = s2 / SAMPLES, v2 = allAt(t2);
+          var mx = Math.max(v2[0], v2[1], v2[2], v2[3]);
+          var px2 = xOf(t2), py2 = yOf(mx);
+          if (s2 === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+        }
+        ctx.stroke();
+
+        /* mean curve (gold, smooth) */
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2.2; ctx.beginPath();
+        for (var s3 = 0; s3 <= SAMPLES; s3++) {
+          var t3 = s3 / SAMPLES, px3 = xOf(t3), py3 = yOf(meanOf(allAt(t3)));
+          if (s3 === 0) ctx.moveTo(px3, py3); else ctx.lineTo(px3, py3);
+        }
+        ctx.stroke();
+
+        /* end labels for the two value lines */
+        ctx.font = monoSm; ctx.textAlign = 'left';
+        ctx.fillStyle = C.err; ctx.fillText('max', x1 + 5, yOf(Math.max.apply(null, allAt(1))) - 4);
+        ctx.fillStyle = C.accent; ctx.fillText('mean', x1 + 5, yOf(meanOf(allAt(1))) + 12);
+
+        /* cursor */
+        var cv = allAt(cursor);
+        var cx = xOf(cursor);
+        ctx.strokeStyle = C.rule; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, yT); ctx.lineTo(cx, yB); ctx.stroke();
+        ctx.setLineDash([]);
+        /* dots where the cursor meets each value line */
+        var mxv = Math.max(cv[0], cv[1], cv[2], cv[3]);
+        var mnv = meanOf(cv);
+        ctx.fillStyle = C.err;
+        ctx.beginPath(); ctx.arc(cx, yOf(mxv), 4, 0, TAU); ctx.fill();
+        ctx.fillStyle = C.accent;
+        ctx.beginPath(); ctx.arc(cx, yOf(mnv), 4, 0, TAU); ctx.fill();
+
+        updateReadout(cv);
+      }
+
+      function updateReadout(cv) {
+        cv = cv || allAt(cursor);
+        out.top.textContent = 'a' + (argmaxOf(cv) + 1);
+        out.flips.textContent = String(flipCount());
+        out.vmean.textContent = meanOf(cv).toFixed(2);
+        out.vmax.textContent = Math.max(cv[0], cv[1], cv[2], cv[3]).toFixed(2);
+      }
+
+      /* ---------- playback ---------- */
+      function tick() {
+        if (!playing) return;
+        cursor += 0.0016;
+        if (cursor > 1) cursor = 0;
+        draw();
+        rafId = requestAnimationFrame(tick);
+      }
+      function setPlaying(on) {
+        playing = on;
+        var btn = fig.querySelector('[data-stab-play]');
+        if (btn) { btn.textContent = on ? 'pause' : 'play'; btn.classList.toggle('is-on', on); }
+        if (on) { rafId = requestAnimationFrame(tick); }
+        else if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      }
+
+      fig.querySelector('[data-stab-play]').addEventListener('click', function () {
+        setPlaying(!playing);
+      });
+      fig.querySelector('[data-stab-reset]').addEventListener('click', function () {
+        setPlaying(false); cursor = 0; draw();
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-stab-preset]'), function (b) {
+        b.addEventListener('click', function () {
+          ampScale = b.dataset.stabPreset === 'barely' ? 0.16 : 1;
+          Array.prototype.forEach.call(fig.querySelectorAll('[data-stab-preset]'), function (o) {
+            o.classList.toggle('is-on', o === b);
+          });
+          draw();
+        });
+      });
+
+      /* scrub by dragging on the canvas */
+      var scrubbing = false;
+      function scrub(ev) {
+        var rect = canvas.getBoundingClientRect();
+        var px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+        cursor = Math.max(0, Math.min(1, (px - padL) / (rect.width - padL - padR)));
+        draw();
+      }
+      canvas.addEventListener('mousedown', function (e) { setPlaying(false); scrubbing = true; scrub(e); });
+      window.addEventListener('mousemove', function (e) { if (scrubbing) scrub(e); });
+      window.addEventListener('mouseup', function () { scrubbing = false; });
+      canvas.addEventListener('touchstart', function (e) { setPlaying(false); scrubbing = true; scrub(e); e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchmove', function (e) { if (scrubbing) { scrub(e); e.preventDefault(); } }, { passive: false });
+      window.addEventListener('touchend', function () { scrubbing = false; });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      /* default to the "actions matter" preset toggle lit */
+      var firstPreset = fig.querySelector('[data-stab-preset="matters"]');
+      if (firstPreset) firstPreset.classList.add('is-on');
+      resize();
+      if (!reduce) setPlaying(true);
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.duelstab-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

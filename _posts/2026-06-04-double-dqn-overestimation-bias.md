@@ -45,7 +45,7 @@ and because the max of several zero-mean numbers is itself positive on average, 
 \mathbb{E}\Big[\max_a Q(s, a)\Big] \;>\; 0 \;=\; \max_a \mathbb{E}\big[Q(s, a)\big].
 \\]
 
-The expectation of the max sits strictly above the max of the expectations, which is just Jensen's inequality wearing work clothes, the max being a convex function. The estimator was unbiased action by action and the max turned it into an optimist, and notice that nothing about this needs the network to be badly trained: ordinary, well-behaved, zero-mean estimation noise is the entire cause, so the bias is there even on a network that is doing everything right.
+The expectation of the max sits strictly above the max of the expectations, which is just Jensen's inequality applied to the max, the max being a convex function. The estimator was unbiased action by action and the max turned it into an optimist, and notice that nothing about this needs the network to be badly trained: ordinary, well-behaved, zero-mean estimation noise is the entire cause, so the bias is there even on a network that is doing everything right.
 
 It helps to put a number on it. Take the noise to be uniform on \\( [-c, c] \\), the simplest symmetric noise there is. The expected maximum of \\( n \\) independent draws from \\( [-c, c] \\) works out to a clean closed form,
 
