@@ -1,0 +1,89 @@
+<!-- Static SVG contrasting the DQN target (one network both selects the next
+     action via the max and evaluates it) with the Double DQN target (the online
+     network selects the action, the target network evaluates it: a second
+     opinion). This is the structural heart of the post: decoupling selection
+     from evaluation. Theme-matched to the site tokens. Self-contained.
+     Usage in a post:  {% raw %}{% include viz/ddqn-target.html %}{% endraw %} -->
+<figure class="flow-viz">
+  <svg viewBox="0 0 820 372" role="img"
+       aria-label="Top: the DQN target. The state s at t+1 flows into the target network theta-minus, whose max over actions both picks the best next action and reports its value, which becomes the bootstrap target y. One network selects and evaluates. Bottom: the Double DQN target. The same state flows into the online network theta, which picks the action a-star by argmax, while the target network theta-minus separately evaluates the value of that chosen action, and only that evaluated value becomes y. The online network selects, the target network evaluates.">
+    <defs>
+      <marker id="ddt-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#797a85"/>
+      </marker>
+      <marker id="ddt-arrow-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#d4af7a"/>
+      </marker>
+      <marker id="ddt-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#e08a7a"/>
+      </marker>
+    </defs>
+    <g font-family="ui-monospace, Menlo, monospace">
+
+      <!-- ===================== DQN ===================== -->
+      <text x="24" y="34" font-size="13" fill="#adadba">DQN target: one network picks the action and reports its value</text>
+
+      <!-- s_{t+1} -->
+      <rect x="28" y="72" width="74" height="42" rx="8" fill="#292a36" stroke="#363745"/>
+      <text x="65" y="98" font-size="14" fill="#f0f0f5" text-anchor="middle">sₜ₊₁</text>
+
+      <!-- target net -->
+      <rect x="176" y="68" width="150" height="50" rx="8" fill="#292a36" stroke="#e08a7a"/>
+      <text x="251" y="89" font-size="13" fill="#f0f0f5" text-anchor="middle">target net θ⁻</text>
+      <text x="251" y="106" font-size="11" fill="#e08a7a" text-anchor="middle">selects and evaluates</text>
+
+      <!-- max node -->
+      <rect x="392" y="68" width="262" height="50" rx="8" fill="#23242f" stroke="#363745"/>
+      <text x="523" y="98" font-size="13.5" fill="#ebc999" text-anchor="middle">maxₐ′ Q(sₜ₊₁, a′; θ⁻)</text>
+
+      <!-- y -->
+      <rect x="724" y="72" width="66" height="42" rx="8" fill="#292a36" stroke="#363745"/>
+      <text x="757" y="98" font-size="14" fill="#f0f0f5" text-anchor="middle">yₜ</text>
+
+      <g stroke-width="1.7">
+        <line x1="104" y1="93" x2="170" y2="93" stroke="#797a85" marker-end="url(#ddt-arrow)"/>
+        <line x1="328" y1="93" x2="388" y2="93" stroke="#e08a7a" marker-end="url(#ddt-arrow-red)"/>
+        <line x1="656" y1="93" x2="720" y2="93" stroke="#797a85" marker-end="url(#ddt-arrow)"/>
+      </g>
+      <text x="410" y="146" font-size="11" fill="#797a85">the argmax and the value it returns come from the very same network</text>
+
+      <!-- divider -->
+      <line x1="24" y1="186" x2="796" y2="186" stroke="#363745" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- ===================== Double DQN ===================== -->
+      <text x="24" y="218" font-size="13" fill="#d4af7a">Double DQN target: online net selects, target net evaluates</text>
+
+      <!-- s_{t+1} -->
+      <rect x="28" y="276" width="74" height="42" rx="8" fill="#292a36" stroke="#363745"/>
+      <text x="65" y="302" font-size="14" fill="#f0f0f5" text-anchor="middle">sₜ₊₁</text>
+
+      <!-- online net (selection) -->
+      <rect x="176" y="240" width="172" height="48" rx="8" fill="#292a36" stroke="#d4af7a"/>
+      <text x="262" y="260" font-size="13" fill="#f0f0f5" text-anchor="middle">online net θ</text>
+      <text x="262" y="277" font-size="11" fill="#d4af7a" text-anchor="middle">a* = argmaxₐ′ Q(·; θ)</text>
+
+      <!-- target net (evaluation) -->
+      <rect x="176" y="306" width="172" height="48" rx="8" fill="#292a36" stroke="#ebc999"/>
+      <text x="262" y="326" font-size="13" fill="#f0f0f5" text-anchor="middle">target net θ⁻</text>
+      <text x="262" y="343" font-size="11" fill="#ebc999" text-anchor="middle">evaluates Q(sₜ₊₁, a*; θ⁻)</text>
+
+      <!-- y -->
+      <rect x="724" y="306" width="66" height="42" rx="8" fill="#292a36" stroke="#363745"/>
+      <text x="757" y="332" font-size="14" fill="#f0f0f5" text-anchor="middle">yₜ</text>
+
+      <g stroke-width="1.7" fill="none">
+        <!-- s -> online net (selection input) -->
+        <path d="M104 290 C 134 290, 140 264, 170 264" stroke="#797a85" marker-end="url(#ddt-arrow)"/>
+        <!-- s -> target net (state input) -->
+        <path d="M104 304 C 134 304, 140 330, 170 330" stroke="#797a85" marker-end="url(#ddt-arrow)"/>
+        <!-- online net -> target net, carrying a* -->
+        <path d="M348 268 C 392 268, 392 308, 376 320" stroke="#d4af7a" marker-end="url(#ddt-arrow-gold)"/>
+        <!-- target net -> y -->
+        <line x1="348" y1="330" x2="720" y2="330" stroke="#ebc999" marker-end="url(#ddt-arrow-gold)"/>
+      </g>
+      <text x="395" y="288" font-size="11" fill="#d4af7a">a*</text>
+      <text x="430" y="322" font-size="11" fill="#ebc999">only this evaluated value reaches yₜ</text>
+    </g>
+  </svg>
+  <figcaption>Same skeleton in both rows, same Bellman target at the end. The difference is who does what at the next state: DQN lets <span class="flow-a">one network</span> pick the action and report its value in a single <span class="flow-a">max</span>, so an action it happens to overrate is selected precisely because it is overrated and then handed back at that inflated height. Double DQN has the <span class="flow-a">online net</span> choose the action and the <span class="flow-a">target net</span> read off its value, so the height that reaches yₜ is a second opinion on an action the first network chose.</figcaption>
+</figure>

@@ -1,0 +1,294 @@
+<!-- Interactive overestimation-bias widget. A state with n actions, all of whose
+     TRUE action values are 0, so any positive number on the readout is pure bias.
+     Each action gets two independent noisy estimates drawn from U[-c, c]: an
+     "online" estimate (which selects) and a "target" estimate (which evaluates).
+       single estimator (DQN):  value = max_a  online_a            -> leans high
+       double estimator (DDQN): value = target_{argmax_a online_a} -> stays at 0
+     Top panel draws one sample (the bars are the online estimates, the dots the
+     target estimates, the argmax marked). Bottom panel accumulates the running
+     average of each over many samples and shows DQN converging to the bias
+     c(n-1)/(n+1) while DDQN sits on the true value. Reuses the .quant-viz theme
+     classes from css/main.scss. Self-contained, dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/overestimation.html %}{% endraw %} -->
+<figure class="quant-viz ov-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Number of actions">
+      <button type="button" data-ov-n="2">2 actions</button>
+      <button type="button" data-ov-n="4">4 actions</button>
+      <button type="button" data-ov-n="8">8 actions</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Noise level">
+      <button type="button" data-ov-c="0.5">low noise</button>
+      <button type="button" data-ov-c="1">med noise</button>
+      <button type="button" data-ov-c="2">high noise</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Sampling">
+      <button type="button" data-ov-draw>draw 1</button>
+      <button type="button" data-ov-run>run 1000</button>
+      <button type="button" data-ov-reset>reset</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="Two stacked panels. The top shows one sample: for each action a bar gives the online noisy estimate and a dot gives the independent target estimate, with the action that maximises the online estimate marked. The single-estimator (DQN) value is the height of that bar; the double-estimator (DDQN) value is the target dot at that same action. The bottom panel plots the running average of each over the samples drawn: the DQN average climbs above the true value of zero and settles on the overestimation bias c times (n minus 1) over (n plus 1), while the DDQN average stays on zero."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>samples</b><span data-ov="n">0</span></span>
+    <span><b>DQN avg</b><span data-ov="dqn" style="color:#e08a7a">—</span></span>
+    <span><b>DDQN avg</b><span data-ov="ddqn" style="color:#d4af7a">—</span></span>
+    <span><b>true value</b><span data-ov="true">0.00</span></span>
+    <span><b>bias c(n−1)/(n+1)</b><span data-ov="bias">—</span></span>
+  </div>
+  <figcaption>Every action here is worth exactly <span class="quant-a">0</span>, so the true max is <span class="quant-a">0</span> and any positive average is bias the estimator invented. The <span class="quant-a">online</span> estimate selects the action, the independent <span style="color:#ebc999">target</span> estimate evaluates it. Take the <span style="color:#e08a7a">max of the online estimates</span> (what DQN does) and the running average drifts up to <span style="color:#e08a7a">c(n−1)/(n+1)</span>; read the target's value at the online argmax instead (what the double estimator does) and it sits on <span class="quant-a">0</span>. More actions and more noise both widen the gap.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__ovVizBooted) return;
+    window.__ovVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      err: '#e08a7a'
+    };
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['n', 'dqn', 'ddqn', 'true', 'bias'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-ov="' + k + '"]');
+      });
+
+      var n = 4;          /* number of actions */
+      var c = 1;          /* uniform noise half-width: eps ~ U[-c, c] */
+      var N = 0;          /* samples accumulated */
+      var sumDQN = 0, sumDDQN = 0;
+      var hist = [];      /* running means: {d: dqnMean, e: ddqnMean} */
+      var eA = [], eB = [], argmax = 0;   /* last drawn sample */
+
+      function bias() { return c * (n - 1) / (n + 1); }
+
+      function reset() {
+        N = 0; sumDQN = 0; sumDDQN = 0; hist = []; eA = []; eB = []; argmax = 0;
+      }
+
+      function drawSample() {
+        var best = -Infinity, bi = 0;
+        eA = []; eB = [];
+        for (var i = 0; i < n; i++) {
+          var a = (Math.random() * 2 - 1) * c;
+          var b = (Math.random() * 2 - 1) * c;
+          eA.push(a); eB.push(b);
+          if (a > best) { best = a; bi = i; }
+        }
+        argmax = bi;
+        var dqn = best;        /* max of the online estimates */
+        var ddqn = eB[bi];     /* target estimate at the online argmax */
+        N++; sumDQN += dqn; sumDDQN += ddqn;
+        if (hist.length < 4000) hist.push({ d: sumDQN / N, e: sumDDQN / N });
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 48, padR = 16;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 384;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function clampY(y, lo, hi) { return Math.max(lo, Math.min(hi, y)); }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        drawTop();
+        drawBottom();
+        updateReadout();
+      }
+
+      /* ---------- top panel: one sample ---------- */
+      function drawTop() {
+        var x0 = padL, x1 = w - padR;
+        var tTop = 24, tBot = 176, tZero = 100;
+        var tHalf = 62;
+        var vmax = c * 1.08;
+        var sc = tHalf / vmax;
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('one sample', x0, tTop - 6);
+
+        /* zero / true-value line */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x0, tZero); ctx.lineTo(x1, tZero); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.font = monoSm;
+        ctx.fillText('true value 0', x1, tZero - 5);
+
+        if (!eA.length) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('press “draw 1” to draw a sample', (x0 + x1) / 2, tZero + 26);
+          return;
+        }
+
+        var slot = (x1 - x0) / n;
+        var bw = Math.min(slot * 0.42, 40);
+        for (var i = 0; i < n; i++) {
+          var xc = x0 + slot * (i + 0.5);
+          var isMax = (i === argmax);
+          /* online estimate: a bar from the zero line */
+          var topY = clampY(tZero - eA[i] * sc, tTop, tBot);
+          ctx.fillStyle = isMax ? 'rgba(212,175,122,0.35)' : 'rgba(212,175,122,0.12)';
+          ctx.strokeStyle = C.accent; ctx.lineWidth = isMax ? 2 : 1.2;
+          var by = Math.min(tZero, topY), bh = Math.abs(topY - tZero);
+          ctx.fillRect(xc - bw / 2, by, bw, bh);
+          ctx.strokeRect(xc - bw / 2, by, bw, bh);
+          /* target estimate: an independent dot */
+          var dotY = clampY(tZero - eB[i] * sc, tTop, tBot);
+          ctx.beginPath();
+          ctx.arc(xc, dotY, isMax ? 5 : 3, 0, Math.PI * 2);
+          ctx.fillStyle = isMax ? C.accentHi : C.dim;
+          ctx.fill();
+          if (isMax) { ctx.strokeStyle = '#1e1f2a'; ctx.lineWidth = 1.5; ctx.stroke(); }
+          /* action label */
+          ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'center';
+          ctx.fillText('a' + (i + 1), xc, tBot + 13);
+        }
+
+        /* mark the two reported values at the argmax */
+        var mx = x0 + slot * (argmax + 0.5);
+        var dqnY = clampY(tZero - eA[argmax] * sc, tTop, tBot);
+        ctx.strokeStyle = C.err; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(mx - bw / 2 - 6, dqnY); ctx.lineTo(mx + bw / 2 + 6, dqnY); ctx.stroke();
+        ctx.fillStyle = C.err; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('DQN = ' + eA[argmax].toFixed(2), Math.min(mx + bw / 2 + 10, x1 - 70), dqnY + 3.5);
+        var ddqnY = clampY(tZero - eB[argmax] * sc, tTop, tBot);
+        ctx.fillStyle = C.accentHi; ctx.textAlign = 'left';
+        ctx.fillText('DDQN = ' + eB[argmax].toFixed(2), Math.min(mx + 10, x1 - 78), ddqnY - 7);
+      }
+
+      /* ---------- bottom panel: running averages ---------- */
+      function drawBottom() {
+        var x0 = padL, x1 = w - padR;
+        var bTop = 226, bBot = 360, bZero = 293;
+        var bHalf = 60;
+        var vmax = Math.max(c * 0.85, 0.25);
+        var sc = bHalf / vmax;
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('running average over ' + N + ' samples', x0, bTop - 6);
+
+        function yOf(v) { return clampY(bZero - v * sc, bTop, bBot); }
+
+        /* zero line (truth) */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(x0, bZero); ctx.lineTo(x1, bZero); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.font = monoSm; ctx.textAlign = 'right';
+        ctx.fillText('0', x0 - 6, bZero + 3.5);
+
+        /* theoretical DQN bias line */
+        var by = yOf(bias());
+        ctx.strokeStyle = C.err; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, by); ctx.lineTo(x1, by); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.err; ctx.textAlign = 'right';
+        ctx.fillText('bias ' + bias().toFixed(2), x1, by - 5);
+
+        if (hist.length < 1) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('the two averages build up here', (x0 + x1) / 2, bZero + 26);
+          return;
+        }
+
+        var L = hist.length;
+        var stride = Math.max(1, Math.floor(L / (x1 - x0)));
+        function trace(key, color) {
+          ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+          var started = false, lastX = x0, lastY = bZero;
+          for (var j = 0; j < L; j += stride) {
+            var px = x0 + (L > 1 ? (j / (L - 1)) : 0) * (x1 - x0);
+            var py = yOf(hist[j][key]);
+            if (!started) { ctx.moveTo(px, py); started = true; } else { ctx.lineTo(px, py); }
+            lastX = px; lastY = py;
+          }
+          /* ensure the final point is the true endpoint */
+          var ex = x1, ey = yOf(hist[L - 1][key]);
+          ctx.lineTo(ex, ey); ctx.stroke();
+          ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = color; ctx.fill();
+        }
+        trace('d', C.err);       /* DQN */
+        trace('e', C.accent);    /* DDQN */
+      }
+
+      function fmt(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); }
+      function updateReadout() {
+        out.n.textContent = String(N);
+        out.dqn.textContent = N ? fmt(sumDQN / N) : '—';
+        out.ddqn.textContent = N ? fmt(sumDDQN / N) : '—';
+        out.bias.textContent = '+' + bias().toFixed(3);
+      }
+
+      /* ---------- controls ---------- */
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-ov-n]'), function (b) {
+          b.classList.toggle('is-on', parseInt(b.dataset.ovN, 10) === n);
+        });
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-ov-c]'), function (b) {
+          b.classList.toggle('is-on', parseFloat(b.dataset.ovC) === c);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-ov-n]'), function (b) {
+        b.addEventListener('click', function () {
+          n = parseInt(b.dataset.ovN, 10); reset(); syncToggles(); draw();
+        });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-ov-c]'), function (b) {
+        b.addEventListener('click', function () {
+          c = parseFloat(b.dataset.ovC); reset(); syncToggles(); draw();
+        });
+      });
+      fig.querySelector('[data-ov-draw]').addEventListener('click', function () {
+        drawSample(); draw();
+      });
+      fig.querySelector('[data-ov-run]').addEventListener('click', function () {
+        for (var k = 0; k < 1000; k++) drawSample();
+        draw();
+      });
+      fig.querySelector('[data-ov-reset]').addEventListener('click', function () {
+        reset(); draw();
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      /* a few opening samples so the panels are not empty on load */
+      for (var s = 0; s < 200; s++) drawSample();
+      drawSample();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.ov-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

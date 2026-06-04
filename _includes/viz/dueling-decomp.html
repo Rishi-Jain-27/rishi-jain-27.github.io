@@ -1,0 +1,232 @@
+<!-- Interactive dueling-decomposition widget. A single state with 4 actions has
+     fixed action values Q(s,a): these are all the loss ever observes. The split
+     Q = V + A has one free scalar, V (the "waterline"), and every choice of it
+     reconstructs the same Q, so V is unidentifiable on its own. Drag the waterline
+     to watch V and the advantages A(s,a) = Q(s,a) - V trade off while the Q bars
+     never move. Dueling pins the waterline by forcing mean_a A = 0, which sits it
+     exactly at the average of the Q bars; the max-variant sits it at the tallest
+     bar. Reuses the .quant-viz theme classes from css/main.scss. Dependency-free.
+     Usage in a post:  {% raw %}{% include viz/dueling-decomp.html %}{% endraw %} -->
+<figure class="quant-viz duel-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Action-value pattern">
+      <button type="button" data-duel-preset="matters">actions matter</button>
+      <button type="button" data-duel-preset="barely">actions barely matter</button>
+      <button type="button" data-duel-preset="random">randomise</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Pin the waterline">
+      <button type="button" data-duel-snap="mean">V → mean(Q)</button>
+      <button type="button" data-duel-snap="max">V → max(Q)</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="Four bars give the fixed action values Q for four actions. A draggable horizontal waterline marks the chosen state value V. The gap between each bar top and the waterline is that action's advantage A: gold where the bar is above the line, red where it is below. Two dashed reference lines mark the mean of the Q bars, which is dueling's waterline making the advantages sum to zero, and the tallest bar, which is the max variant. Dragging the waterline changes V and every advantage but leaves the Q bars untouched."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>V (waterline)</b><span data-duel="v">—</span></span>
+    <span><b>mean(A)</b><span data-duel="meanA">—</span></span>
+    <span><b>max(A)</b><span data-duel="maxA">—</span></span>
+    <span><b>Σ A</b><span data-duel="sumA">—</span></span>
+    <span><b>reconstructed Q</b><span data-duel="recon" style="color:#d4af7a">unchanged</span></span>
+  </div>
+  <figcaption>The four <span class="quant-a">Q(s,a)</span> bars are the only thing a Q-learning loss ever sees, and they never move here. Drag the <span style="color:#ebc999">waterline</span> up or down: <span class="quant-a">V</span> and all four advantages <span class="quant-a">A(s,a) = Q(s,a) − V</span> change together, yet every reconstruction V + A lands back on the same Q, which is exactly why the split is ambiguous. Dueling removes the ambiguity by forcing <span style="color:#ebc999">mean(A) = 0</span>, which parks the waterline on the average of the bars; the max-variant parks it on the tallest. Try “actions barely matter”: the bars nearly coincide, the advantages collapse toward zero, and almost the entire action value is carried by the one shared number V.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__duelVizBooted) return;
+    window.__duelVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      err: '#e08a7a'
+    };
+
+    var LO = 0, HI = 8;   /* value axis */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['v', 'meanA', 'maxA', 'sumA', 'recon'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-duel="' + k + '"]');
+      });
+
+      var Q = [2, 6, 3, 7];
+      var V = mean(Q);
+
+      function mean(arr) { var s = 0; for (var i = 0; i < arr.length; i++) s += arr[i]; return s / arr.length; }
+      function maxOf(arr) { var m = -Infinity; for (var i = 0; i < arr.length; i++) if (arr[i] > m) m = arr[i]; return m; }
+      function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+      function setPreset(name) {
+        if (name === 'matters') Q = [2, 6, 3, 7];
+        else if (name === 'barely') Q = [4.0, 4.3, 3.8, 4.1];
+        else {
+          Q = [];
+          for (var i = 0; i < 4; i++) Q.push(Math.round((1 + Math.random() * 6) * 10) / 10);
+        }
+        V = mean(Q);
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 52, padR = 132, padT = 38, padB = 34;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 340;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function plotTop() { return padT; }
+      function plotBot() { return h - padB; }
+      function yOf(v) {
+        return plotBot() - (v - LO) / (HI - LO) * (plotBot() - plotTop());
+      }
+      function vOf(y) {
+        return LO + (plotBot() - y) / (plotBot() - plotTop()) * (HI - LO);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var x0 = padL, x1 = w - padR;
+        var meanQ = mean(Q), maxQ = maxOf(Q);
+
+        /* axis ticks */
+        ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+        ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'right';
+        for (var t = LO; t <= HI; t += 2) {
+          var ty = yOf(t);
+          ctx.beginPath(); ctx.moveTo(x0, ty); ctx.lineTo(x1, ty); ctx.stroke();
+          ctx.fillText(t.toFixed(0), x0 - 6, ty + 3.5);
+        }
+
+        var balanced = Math.abs(V - meanQ) < 0.06;
+        ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillStyle = balanced ? C.accentHi : C.dim;
+        ctx.fillText(balanced ? 'advantages sum to zero' : 'drag the waterline', x0, plotTop() - 12);
+
+        var n = Q.length;
+        var slot = (x1 - x0) / n;
+        var bw = Math.min(slot * 0.5, 58);
+
+        /* the Q bars (fixed) */
+        for (var i = 0; i < n; i++) {
+          var xc = x0 + slot * (i + 0.5);
+          var topY = yOf(Q[i]), baseY = yOf(LO);
+          ctx.fillStyle = 'rgba(212,175,122,0.10)';
+          ctx.strokeStyle = 'rgba(212,175,122,0.55)'; ctx.lineWidth = 1.4;
+          ctx.fillRect(xc - bw / 2, topY, bw, baseY - topY);
+          ctx.strokeRect(xc - bw / 2, topY, bw, baseY - topY);
+          ctx.fillStyle = C.muted; ctx.font = monoSm; ctx.textAlign = 'center';
+          ctx.fillText('Q ' + Q[i].toFixed(1), xc, topY - 6);
+          ctx.fillStyle = C.dim;
+          ctx.fillText('a' + (i + 1), xc, baseY + 14);
+        }
+
+        /* advantage segments: gap between bar top and waterline */
+        var wy = yOf(V);
+        for (var j = 0; j < n; j++) {
+          var xcj = x0 + slot * (j + 0.5);
+          var a = Q[j] - V;
+          var qy = yOf(Q[j]);
+          var col = a >= 0 ? C.accent : C.err;
+          var segTop = Math.min(qy, wy), segH = Math.abs(qy - wy);
+          ctx.fillStyle = a >= 0 ? 'rgba(212,175,122,0.38)' : 'rgba(224,138,122,0.34)';
+          ctx.fillRect(xcj - bw / 2, segTop, bw, segH);
+          ctx.fillStyle = col; ctx.font = monoSm; ctx.textAlign = 'left';
+          var ly = (qy + wy) / 2 + 3.5;
+          ctx.fillText('A ' + (a >= 0 ? '+' : '') + a.toFixed(1), xcj + bw / 2 + 4, ly);
+        }
+
+        /* reference lines: mean(Q) and max(Q) */
+        function refLine(val, color, label, above) {
+          var ry = yOf(val);
+          ctx.strokeStyle = color; ctx.lineWidth = 1.1; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x1, ry); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = color; ctx.font = monoSm; ctx.textAlign = 'left';
+          ctx.fillText(label, x1 + 6, ry + (above ? -3 : 11));
+        }
+        refLine(maxQ, C.dim, 'max(Q): max variant', true);
+        refLine(meanQ, C.accentHi, 'mean(Q): dueling', false);
+
+        /* the draggable waterline */
+        ctx.strokeStyle = C.accentHi; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.moveTo(x0, wy); ctx.lineTo(x1, wy); ctx.stroke();
+        /* a grab handle on the right edge */
+        ctx.fillStyle = C.accentHi;
+        ctx.beginPath(); ctx.arc(x1, wy, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = C.fg; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('V = ' + V.toFixed(2), x1 + 6, wy - 14);
+
+        updateReadout();
+      }
+
+      function fmt(v) { return (v >= 0 ? '+' : '') + v.toFixed(2); }
+      function updateReadout() {
+        var A = Q.map(function (q) { return q - V; });
+        out.v.textContent = V.toFixed(2);
+        out.meanA.textContent = fmt(mean(A));
+        out.maxA.textContent = fmt(maxOf(A));
+        out.sumA.textContent = fmt(A.reduce(function (s, x) { return s + x; }, 0));
+      }
+
+      /* ---------- dragging the waterline ---------- */
+      var dragging = false;
+      function pointerVal(ev) {
+        var rect = canvas.getBoundingClientRect();
+        var py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+        return clamp(vOf(py), LO, HI);
+      }
+      function startDrag(ev) { dragging = true; V = pointerVal(ev); draw(); ev.preventDefault(); }
+      function moveDrag(ev) { if (!dragging) return; V = pointerVal(ev); draw(); ev.preventDefault(); }
+      function endDrag() { dragging = false; }
+      canvas.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      canvas.addEventListener('touchstart', startDrag, { passive: false });
+      canvas.addEventListener('touchmove', moveDrag, { passive: false });
+      window.addEventListener('touchend', endDrag);
+
+      /* ---------- controls ---------- */
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-duel-preset]'), function (b) {
+        b.addEventListener('click', function () { setPreset(b.dataset.duelPreset); draw(); });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-duel-snap]'), function (b) {
+        b.addEventListener('click', function () {
+          V = b.dataset.duelSnap === 'mean' ? mean(Q) : maxOf(Q);
+          draw();
+        });
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.duel-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>
