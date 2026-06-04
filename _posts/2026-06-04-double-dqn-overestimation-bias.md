@@ -2,7 +2,7 @@
 layout: post
 title: "Double DQN, and the trouble with taking the max"
 author: "Rishi Jain"
-date: 2026-06-04 12:00:00
+date: 2026-06-04
 categories: projects
 math: true
 ---
