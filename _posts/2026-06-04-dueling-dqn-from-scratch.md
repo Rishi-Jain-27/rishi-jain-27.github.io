@@ -84,19 +84,19 @@ Drag the waterline anywhere you like: \\( V \\) changes, all four advantages cha
 The cure is to stop leaving the split free and impose a single rule that selects exactly one waterline out of the infinite family. Dueling does this by subtracting the average advantage inside the aggregation, so that what the network actually emits is
 
 \\[
-Q(s, a) \;=\; V(s) + \left( A(s, a) - \frac{1}{|\mathcal{A}|} \sum_{a'} A(s, a') \right).
+Q(s, a) \;=\; V(s) + \left( A(s, a) - \frac{1}{\vert \mathcal{A} \vert} \sum_{a'} A(s, a') \right).
 \\]
 
-Let me unpack the new piece, since it looks heavier than it is. The symbol \\( |\mathcal{A}| \\) is just the number of actions available, so if there are four moves then \\( |\mathcal{A}| = 4 \\). The expression \\( \sum_{a'} A(s, a') \\) means add up the advantages over all the actions, the \\( \sum \\) being a summation sign and \\( a' \\) running across every move.
+Let me unpack the new piece, since it looks heavier than it is. The symbol \\( \vert \mathcal{A} \vert \\) is just the number of actions available, so if there are four moves then \\( \vert \mathcal{A} \vert = 4 \\). The expression \\( \sum_{a'} A(s, a') \\) means add up the advantages over all the actions, the \\( \sum \\) being a summation sign and \\( a' \\) running across every move.
 
-Divide that total by the number of actions and you have \\( \frac{1}{|\mathcal{A}|} \sum_{a'} A(s, a') \\), which is nothing more exotic than the average advantage. So the bracketed term is each raw advantage with the average advantage subtracted off, which is a standard move: subtracting the mean from a set of numbers forces the leftover numbers to average to zero.
+Divide that total by the number of actions and you have \\( \frac{1}{\vert \mathcal{A} \vert} \sum_{a'} A(s, a') \\), which is nothing more exotic than the average advantage. So the bracketed term is each raw advantage with the average advantage subtracted off, which is a standard move: subtracting the mean from a set of numbers forces the leftover numbers to average to zero.
 
 That is the entire trick. No matter what the advantage stream emits, the advantages that actually go into the Q-value are forced to sum to zero, and that single constraint nails the waterline to one specific height.
 
 Which height? Average both sides of the equation over the actions. On the right the bracketed term averages to zero by construction, so the average of \\( Q(s, a) \\) over the moves equals \\( V(s) \\) on its own:
 
 \\[
-\frac{1}{|\mathcal{A}|} \sum_{a} Q(s, a) \;=\; V(s).
+\frac{1}{\vert \mathcal{A} \vert} \sum_{a} Q(s, a) \;=\; V(s).
 \\]
 
 So the value stream is pinned to mean exactly the average Q-value of the state, which is a thoroughly sensible thing for "the value of the state" to mean. In the waterline widget this is the button labelled "V to mean(Q)": it drops the line straight onto the average of the four bars, the one height where the gold gaps above and the red gaps below balance out and the advantages sum to zero.

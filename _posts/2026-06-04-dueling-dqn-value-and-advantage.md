@@ -46,13 +46,13 @@ The widget below is that ambiguity made draggable. A single state has four fixed
 The fix is to stop leaving the split free and impose a constraint that picks exactly one waterline out of the family. The dueling architecture does this by subtracting the mean advantage inside the aggregation, so that the value the network actually emits is
 
 \\[
-Q(s, a; \theta, \alpha, \beta) = V(s; \theta, \beta) + \left( A(s, a; \theta, \alpha) - \frac{1}{|\mathcal{A}|}\sum_{a'} A(s, a'; \theta, \alpha) \right),
+Q(s, a; \theta, \alpha, \beta) = V(s; \theta, \beta) + \left( A(s, a; \theta, \alpha) - \frac{1}{\vert \mathcal{A} \vert}\sum_{a'} A(s, a'; \theta, \alpha) \right),
 \\]
 
-where \\( |\mathcal{A}| \\) is the number of actions and the sum runs over all of them. The bracketed term is the raw advantage with the average advantage removed, which forces the bracketed advantages to sum to zero no matter what the advantage stream emits, and that single constraint nails the waterline down. Average both sides over the actions and the bracketed term vanishes by construction, leaving
+where \\( \vert \mathcal{A} \vert \\) is the number of actions and the sum runs over all of them. The bracketed term is the raw advantage with the average advantage removed, which forces the bracketed advantages to sum to zero no matter what the advantage stream emits, and that single constraint nails the waterline down. Average both sides over the actions and the bracketed term vanishes by construction, leaving
 
 \\[
-\frac{1}{|\mathcal{A}|}\sum_{a} Q(s, a) = V(s),
+\frac{1}{\vert \mathcal{A} \vert}\sum_{a} Q(s, a) = V(s),
 \\]
 
 so the value stream is pinned to mean exactly the average action value of the state, which is a genuinely sensible thing for it to mean. In the widget this is the "V → mean(Q)" button: it drops the waterline straight onto the average of the four bars, the one height where the gold gaps and the red gaps balance out and the advantages sum to zero.
