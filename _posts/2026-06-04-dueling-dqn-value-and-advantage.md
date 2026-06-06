@@ -3,7 +3,7 @@ layout: post
 title: "Dueling DQN, and splitting a state's worth from an action's"
 author: "Rishi Jain"
 date: 2026-06-04
-categories: projects
+categories: notes
 math: true
 ---
 

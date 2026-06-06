@@ -3,7 +3,7 @@ layout: post
 title: "Simply explained: double DQN"
 author: "Rishi Jain"
 date: 2026-06-04
-categories: projects
+categories: notes
 math: true
 ---
 
