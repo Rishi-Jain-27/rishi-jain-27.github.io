@@ -5,25 +5,40 @@ ML Researcher and Engineer specializing in Mechanistic Interpretability, Reinfor
 
 ## Core Technical Stack
 * **Languages:** Python, Java, JavaScript
-* **ML Frameworks:** PyTorch, Hugging Face Transformers
-* **Infrastructure:** Vercel, Cloudflare, Neon Databases
-* **Methodologies:** Retrieval Augmented Generation (RAG), Mechanistic Interpretability, Reinforcement Learning
+* **ML Frameworks:** PyTorch, Scikit-learn, Hugging Face Transformers
+* **Infrastructure:** Vercel, Cloudflare, Neon (PostgreSQL), Render
+* **Methodologies:** RAG Systems, Mechanistic Interpretability, Reinforcement Learning
 
 ## Featured Projects
 
-### Hindi-English Translator
-An end-to-end Neural Machine Translation system implemented from scratch.
-* **Key Features:** Custom RoPE (Rotary Positional Embeddings), Multi-Head Attention (MHA), and optimized beam-search decoding.
-* **Tech:** PyTorch, Hugging Face Transformers.
-* **Link:** [View on Hugging Face](https://huggingface.co/Rishi-Jain-27)
+### CodeFlow
+Visualizes complex codebases by automatically converting source code into Mermaid.js flowcharts.
+* **Tech:** Gradio, HTML, llama.cpp, Qwen-Coder-30B (Dynamic Quantization).
+
+### Support Ticket Triage Agent
+An intelligent agent utilizing RAG to automate customer support workflows for companies like Anthropic and HackerRank.
+* **Tech:** Python, RAG frameworks, Vector Databases, OpenAI API.
 
 ### DebateSearch
-An AI-integrated platform for the competitive debate community that aggregates and recommends high-level debate rounds for coaches and researchers.
+An AI-integrated search platform democratizing access to competitive debate information via custom index optimization.
 * **Tech:** JavaScript, SQL, Neon Databases, Vercel, Cloudflare.
 
-### RAG Support Ticket Triage Agent
-An intelligent agent designed for automated customer support ticket resolution.
-* **Tech:** RAG, Vector Databases, Scikit-learn.
+## Research & Replications
+
+### Neural Machine Translation (NMT)
+End-to-end Hindi-English translator with a scratch-built Transformer architecture.
+* **Key Features:** Custom SentencePiece tokenizer, RoPE, Beam Search, and Transformer blocks.
+* **Link:** [View on Hugging Face](https://huggingface.co/spaces/Rishi-Jain-27/hindi-english-translator)
+
+### Reinforcement Learning (RL) Suite
+Implementation of foundational RL algorithms from scratch for complex environments.
+* **Bipedal Walker:** Implemented SAC, DDPG, and TD3 for Easy/Hardcore environments.
+* **Lunar Lander:** Implemented PPO and REINFORCE to navigate complex physics.
+* **Flappy Bird:** Implemented DQL with Dueling and Double DQN extensions.
+* **Link:** [GitHub Profile](https://github.com/Rishi-Jain-27)
+
+## Blog & Notes
+Check out my [personal blog](https://rishi-jain-27.github.io/) for technical deep dives, project walkthroughs, and conceptual notes on deep learning.
 
 ## Connect
 * **GitHub:** [https://github.com/Rishi-Jain-27](https://github.com/Rishi-Jain-27)
