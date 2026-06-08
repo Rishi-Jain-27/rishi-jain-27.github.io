@@ -1,0 +1,238 @@
+<!-- Interactive twin-critic widget. A single action whose TRUE value is 0, so any
+     nonzero average is bias the estimator invented. Two independent critics each
+     report a noisy estimate drawn from U[-c, c]. A single critic is unbiased: its
+     running average sits on 0. SAC reports the SMALLER of the two critics, and the
+     min of two zero-mean numbers is negative on average, so the twin-critic average
+     drifts DOWN to the closed form -c/3, a deliberate pessimism that pulls against
+     the upward overestimation bias the bootstrap injects elsewhere. Top panel shows
+     one draw (the two estimates and which one the min keeps); bottom panel keeps the
+     running averages. Reuses the .quant-viz theme classes from css/main.scss.
+     Self-contained, dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/twin-critics.html %}{% endraw %} -->
+<figure class="quant-viz tc-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Noise level">
+      <button type="button" data-tc-c="0.5">low noise</button>
+      <button type="button" data-tc-c="1">med noise</button>
+      <button type="button" data-tc-c="2">high noise</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Sampling">
+      <button type="button" data-tc-draw>draw 1</button>
+      <button type="button" data-tc-run>run 1000</button>
+      <button type="button" data-tc-reset>reset</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="Two stacked panels. The top shows one draw: two independent critic estimates of an action whose true value is zero, with the smaller of the two marked as the one SAC keeps. The bottom panel plots the running average over many draws: a single critic stays on the true value of zero, while taking the minimum of the two critics drifts below zero and settles on minus c over 3, a built-in pessimism."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>draws</b><span data-tc="n">0</span></span>
+    <span><b>single critic</b><span data-tc="one" style="color:#adadba">—</span></span>
+    <span><b>min of two</b><span data-tc="min" style="color:#d4af7a">—</span></span>
+    <span><b>true value</b><span data-tc="true">0.000</span></span>
+    <span><b>−c/3</b><span data-tc="bias">—</span></span>
+  </div>
+  <figcaption>The action is worth exactly <span class="quant-a">0</span>, so any nonzero average is invented. A <span style="color:#adadba">single critic</span> is unbiased and its average sits on <span class="quant-a">0</span>. Keep the <span class="quant-a">smaller of two</span> critics, the way SAC does, and the average settles on <span class="quant-a">−c/3</span>: a deliberate pessimism that leans low to cancel the optimism the bootstrap leans high.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__tcVizBooted) return;
+    window.__tcVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999'
+    };
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['n', 'one', 'min', 'true', 'bias'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-tc="' + k + '"]');
+      });
+
+      var c = 1;            /* uniform noise half-width: eps ~ U[-c, c] */
+      var N = 0;
+      var sumOne = 0, sumMin = 0;
+      var hist = [];        /* running means: {o: oneMean, m: minMean} */
+      var q1 = 0, q2 = 0, keep = 0;   /* last draw */
+
+      function biasVal() { return -c / 3; }
+
+      function reset() { N = 0; sumOne = 0; sumMin = 0; hist = []; q1 = q2 = 0; keep = 0; }
+
+      function drawSample() {
+        q1 = (Math.random() * 2 - 1) * c;
+        q2 = (Math.random() * 2 - 1) * c;
+        keep = Math.min(q1, q2);
+        N++; sumOne += q1; sumMin += keep;
+        if (hist.length < 4000) hist.push({ o: sumOne / N, m: sumMin / N });
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 48, padR = 16;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 384;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function clampY(y, lo, hi) { return Math.max(lo, Math.min(hi, y)); }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        drawTop();
+        drawBottom();
+        updateReadout();
+      }
+
+      /* ---------- top panel: one draw, two critics ---------- */
+      function drawTop() {
+        var x0 = padL, x1 = w - padR;
+        var tTop = 24, tBot = 176, tZero = 100, tHalf = 62;
+        var vmax = c * 1.08, sc = tHalf / vmax;
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('one draw', x0, tTop - 6);
+
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x0, tZero); ctx.lineTo(x1, tZero); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.font = monoSm;
+        ctx.fillText('true value 0', x1, tZero - 5);
+
+        if (N === 0) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('press “draw 1” to draw two critic estimates', (x0 + x1) / 2, tZero + 26);
+          return;
+        }
+
+        var slot = (x1 - x0) / 2;
+        var bw = Math.min(slot * 0.34, 54);
+        var vals = [q1, q2];
+        var labels = ['critic 1', 'critic 2'];
+        for (var i = 0; i < 2; i++) {
+          var xc = x0 + slot * (i + 0.5);
+          var isKept = (vals[i] === keep);
+          var topY = clampY(tZero - vals[i] * sc, tTop, tBot);
+          ctx.fillStyle = isKept ? 'rgba(212,175,122,0.35)' : 'rgba(173,173,186,0.12)';
+          ctx.strokeStyle = isKept ? C.accent : C.muted; ctx.lineWidth = isKept ? 2 : 1.2;
+          var by = Math.min(tZero, topY), bh = Math.abs(topY - tZero);
+          ctx.fillRect(xc - bw / 2, by, bw, bh);
+          ctx.strokeRect(xc - bw / 2, by, bw, bh);
+          ctx.fillStyle = isKept ? C.accent : C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText(labels[i] + ' = ' + vals[i].toFixed(2), xc, topY + (vals[i] >= 0 ? -8 : 16));
+          ctx.fillStyle = C.dim; ctx.font = monoSm;
+          ctx.fillText(labels[i], xc, tBot + 13);
+        }
+        /* tag the kept (minimum) one */
+        var keepX = x0 + slot * ((q1 <= q2 ? 0 : 1) + 0.5);
+        ctx.fillStyle = C.accentHi; ctx.font = monoSm; ctx.textAlign = 'center';
+        ctx.fillText('↑ SAC keeps the smaller', keepX, tBot + 27);
+      }
+
+      /* ---------- bottom panel: running averages ---------- */
+      function drawBottom() {
+        var x0 = padL, x1 = w - padR;
+        var bTop = 226, bBot = 360, bZero = 280, bHalf = 66;
+        var vmax = Math.max(c * 0.5, 0.2), sc = bHalf / vmax;
+
+        ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('running average over ' + N + ' draws', x0, bTop - 6);
+
+        function yOf(v) { return clampY(bZero - v * sc, bTop, bBot); }
+
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(x0, bZero); ctx.lineTo(x1, bZero); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.font = monoSm; ctx.textAlign = 'right';
+        ctx.fillText('0', x0 - 6, bZero + 3.5);
+
+        /* theoretical -c/3 line */
+        var by = yOf(biasVal());
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, by); ctx.lineTo(x1, by); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.accent; ctx.textAlign = 'right';
+        ctx.fillText('−c/3 = ' + biasVal().toFixed(2), x1, by + 13);
+
+        if (hist.length < 1) {
+          ctx.fillStyle = C.dim; ctx.font = mono; ctx.textAlign = 'center';
+          ctx.fillText('the two averages build up here', (x0 + x1) / 2, bZero + 26);
+          return;
+        }
+
+        var L = hist.length;
+        var stride = Math.max(1, Math.floor(L / (x1 - x0)));
+        function trace(key, color) {
+          ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+          var started = false;
+          for (var j = 0; j < L; j += stride) {
+            var px = x0 + (L > 1 ? (j / (L - 1)) : 0) * (x1 - x0);
+            var py = yOf(hist[j][key]);
+            if (!started) { ctx.moveTo(px, py); started = true; } else { ctx.lineTo(px, py); }
+          }
+          var ex = x1, ey = yOf(hist[L - 1][key]);
+          ctx.lineTo(ex, ey); ctx.stroke();
+          ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = color; ctx.fill();
+        }
+        trace('o', C.muted);     /* single critic */
+        trace('m', C.accent);    /* min of two */
+      }
+
+      function fmt(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); }
+      function updateReadout() {
+        out.n.textContent = String(N);
+        out.one.textContent = N ? fmt(sumOne / N) : '—';
+        out.min.textContent = N ? fmt(sumMin / N) : '—';
+        out.bias.textContent = biasVal().toFixed(3);
+      }
+
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-tc-c]'), function (b) {
+          b.classList.toggle('is-on', parseFloat(b.dataset.tcC) === c);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-tc-c]'), function (b) {
+        b.addEventListener('click', function () { c = parseFloat(b.dataset.tcC); reset(); syncToggles(); draw(); });
+      });
+      fig.querySelector('[data-tc-draw]').addEventListener('click', function () { drawSample(); draw(); });
+      fig.querySelector('[data-tc-run]').addEventListener('click', function () {
+        for (var k = 0; k < 1000; k++) drawSample(); draw();
+      });
+      fig.querySelector('[data-tc-reset]').addEventListener('click', function () { reset(); draw(); });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      for (var s = 0; s < 200; s++) drawSample();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.tc-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>

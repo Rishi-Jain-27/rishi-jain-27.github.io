@@ -1,0 +1,227 @@
+<!-- Interactive soft-policy widget. A fixed value landscape Q(a) over a 1D
+     continuous action a, with two bumps: a tall one at +0.55 (the genuinely
+     best action) and a shorter one at -0.55 (a decent but worse option). The
+     soft-optimal policy is the Boltzmann distribution pi(a) ∝ exp(Q(a)/alpha),
+     drawn as the filled gold curve. The temperature alpha is the dial: small
+     alpha makes pi a spike on the global peak (exploit), large alpha flattens
+     it toward uniform (explore). Readouts give the policy entropy, the soft
+     value V = alpha*log integral exp(Q/alpha) da, and how the policy's
+     probability mass splits between the two basins. Reuses the .quant-viz theme
+     classes from css/main.scss. Self-contained, dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/soft-policy.html %}{% endraw %} -->
+<figure class="quant-viz sp-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Temperature alpha">
+      <button type="button" data-sp-a="0.03">α 0.03</button>
+      <button type="button" data-sp-a="0.1">α 0.1</button>
+      <button type="button" data-sp-a="0.3">α 0.3</button>
+      <button type="button" data-sp-a="0.8">α 0.8</button>
+      <button type="button" data-sp-a="2">α 2.0</button>
+    </div>
+    <div class="quant-viz-bits" aria-hidden="true">
+      <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.72rem;color:#797a85;align-self:center;">exploit&nbsp;←&nbsp;&nbsp;→&nbsp;explore</span>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="A value landscape Q(a) over a continuous action a, with a tall peak at the right marking the best action and a shorter peak at the left marking a worse option. The filled curve is the soft policy pi(a) proportional to exp(Q(a) over alpha). At small alpha the policy is a narrow spike sitting on the global peak; as alpha grows the policy spreads out and puts probability on the worse option too, eventually approaching a flat uniform distribution."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>α</b><span data-sp="a">—</span></span>
+    <span><b>entropy H</b><span data-sp="h">—</span></span>
+    <span><b>soft value V</b><span data-sp="v">—</span></span>
+    <span><b>P(best)</b><span data-sp="pr" style="color:#d4af7a">—</span></span>
+    <span><b>P(worse)</b><span data-sp="pl" style="color:#8aa9e0">—</span></span>
+  </div>
+  <figcaption>The grey curve is the value landscape <span class="quant-a">Q(a)</span>: the tall peak on the right is the genuinely best action, the shorter peak on the left a worse option. The gold fill is the soft policy <span class="quant-a">π(a) ∝ exp(Q(a)/α)</span>. Turn <span class="quant-a">α</span> down and the policy collapses onto the best action, the dashed line; turn it up and the policy spreads, eventually willing to try the worse option, which is exactly how it would discover a peak it had underrated.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__spVizBooted) return;
+    window.__spVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      blue: '#8aa9e0'
+    };
+
+    var A0 = -1.2, A1 = 1.2;     /* action range */
+    var G = 320;                 /* integration grid points */
+    var DA = (A1 - A0) / (G - 1);
+
+    /* Fixed value landscape: tall best peak right, shorter worse peak left. */
+    function Qof(a) {
+      var best  = 1.00 * Math.exp(-((a - 0.55) * (a - 0.55)) / (2 * 0.15 * 0.15));
+      var worse = 0.78 * Math.exp(-((a + 0.55) * (a + 0.55)) / (2 * 0.18 * 0.18));
+      return best + worse;
+    }
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['a', 'h', 'v', 'pr', 'pl'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-sp="' + k + '"]');
+      });
+
+      var alpha = 0.3;
+
+      /* precompute the grid of Q values, its global argmax and the valley */
+      var grid = [], Qg = [], qMax = -Infinity, qArg = 0;
+      for (var i = 0; i < G; i++) {
+        var a = A0 + i * DA;
+        var q = Qof(a);
+        grid.push(a); Qg.push(q);
+        if (q > qMax) { qMax = q; qArg = i; }
+      }
+      var bestAction = grid[qArg];
+      /* basin split: the valley (lowest Q) between the two peaks, near a = 0 */
+      var valI = 0, valMin = Infinity;
+      for (var k = 0; k < G; k++) {
+        if (grid[k] > -0.35 && grid[k] < 0.35 && Qg[k] < valMin) { valMin = Qg[k]; valI = k; }
+      }
+
+      /* the soft policy pi(a) ∝ exp(Q/alpha), plus entropy, soft value, masses */
+      function policy() {
+        var w = [], wsum = 0;
+        for (var i = 0; i < G; i++) {
+          var e = Math.exp((Qg[i] - qMax) / alpha);   /* shifted for stability */
+          w.push(e); wsum += e;
+        }
+        var pi = [], H = 0, pL = 0, pR = 0, piMax = 0;
+        for (var j = 0; j < G; j++) {
+          var p = w[j] / wsum;            /* probability mass in this cell */
+          pi.push(p);
+          if (p > piMax) piMax = p;
+          var dens = p / DA;              /* probability density */
+          if (dens > 1e-12) H -= p * Math.log(dens);
+          if (j <= valI) pL += p; else pR += p;
+        }
+        /* soft value V = alpha * log integral exp(Q/alpha) da, log-sum-exp form */
+        var V = qMax + alpha * Math.log(wsum * DA);
+        return { pi: pi, H: H, V: V, pL: pL, pR: pR, piMax: piMax };
+      }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 16, padR = 16, padT = 26, padB = 30;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 300;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function xOf(a) { return padL + (a - A0) / (A1 - A0) * (w - padL - padR); }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var x0 = padL, x1 = w - padR, yTop = padT, yBot = h - padB;
+        var P = policy();
+
+        /* baseline */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x0, yBot); ctx.lineTo(x1, yBot); ctx.stroke();
+
+        /* Q landscape, scaled so its max sits near the top */
+        var qScale = (yBot - yTop) / (qMax * 1.12);
+        ctx.strokeStyle = C.dim; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (var i = 0; i < G; i++) {
+          var px = xOf(grid[i]), py = yBot - Qg[i] * qScale;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'left';
+        ctx.fillText('Q(a)', xOf(grid[Math.round(G * 0.5)]) + 4, yBot - qMax * qScale - 4);
+
+        /* dashed line at the greedy (argmax) action */
+        ctx.strokeStyle = C.accentHi; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(xOf(bestAction), yTop - 4); ctx.lineTo(xOf(bestAction), yBot); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.accentHi; ctx.textAlign = 'center';
+        ctx.fillText('greedy a*', xOf(bestAction), yTop - 8);
+
+        /* the soft policy density, filled */
+        var pScale = (yBot - yTop) / (P.piMax * 1.15);
+        ctx.beginPath();
+        ctx.moveTo(x0, yBot);
+        for (var j = 0; j < G; j++) {
+          ctx.lineTo(xOf(grid[j]), yBot - P.pi[j] * pScale);
+        }
+        ctx.lineTo(x1, yBot);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(212,175,122,0.22)';
+        ctx.fill();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var m = 0; m < G; m++) {
+          var qx = xOf(grid[m]), qy = yBot - P.pi[m] * pScale;
+          if (m === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
+        }
+        ctx.stroke();
+        ctx.fillStyle = C.accent; ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('π(a) ∝ exp(Q/α)', x0 + 4, yTop + 6);
+
+        /* basin divider and labels */
+        ctx.strokeStyle = C.rule; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(xOf(grid[valI]), yTop); ctx.lineTo(xOf(grid[valI]), yBot); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.blue; ctx.font = monoSm; ctx.textAlign = 'center';
+        ctx.fillText('worse', xOf(-0.55), yBot + 16);
+        ctx.fillStyle = C.accent;
+        ctx.fillText('best', xOf(0.55), yBot + 16);
+
+        updateReadout(P);
+      }
+
+      function updateReadout(P) {
+        out.a.textContent = alpha.toFixed(2);
+        out.h.textContent = (P.H >= 0 ? '+' : '') + P.H.toFixed(2) + ' nats';
+        out.v.textContent = P.V.toFixed(3);
+        out.pr.textContent = (P.pR * 100).toFixed(1) + '%';
+        out.pl.textContent = (P.pL * 100).toFixed(1) + '%';
+      }
+
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-sp-a]'), function (b) {
+          b.classList.toggle('is-on', parseFloat(b.dataset.spA) === alpha);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-sp-a]'), function (b) {
+        b.addEventListener('click', function () {
+          alpha = parseFloat(b.dataset.spA); syncToggles(); draw();
+        });
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.sp-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>
