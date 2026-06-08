@@ -35,7 +35,7 @@ None of that is glamorous and none of it ever shows up in a results table, which
 
 ## What's next
 
-The whole reason for building this scaffolding was to have something solid to run more experiments on top of, and the list of those experiments is long enough already. There is an optimiser sweep to do, `Adam` against `AdamW` against `SGD`, and then learning-rate tuning for whichever of them wins, a `ReLU` against `GELU` comparison on the same architecture, a batch size of 16 against 32, a pass through some data-augmentation transforms, and eventually transfer learning from a pretrained backbone. Each of those is one experiment the scaffolding now makes cheap to run.
+The whole reason for building this scaffolding was to have something solid to run more experiments on top of, and the list of those experiments is long enough already. There is an optimizer sweep to do, `Adam` against `AdamW` against `SGD`, and then learning-rate tuning for whichever of them wins, a `ReLU` against `GELU` comparison on the same architecture, a batch size of 16 against 32, a pass through some data-augmentation transforms, and eventually transfer learning from a pretrained backbone. Each of those is one experiment the scaffolding now makes cheap to run.
 
 ## Takeaway
 

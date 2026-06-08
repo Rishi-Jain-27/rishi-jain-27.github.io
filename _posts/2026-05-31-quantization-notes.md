@@ -202,7 +202,7 @@ Quantization-aware training, QAT, is the heavier option, for when that residual 
 
 {% include viz/ptq-vs-qat.html %}
 
-The difference comes down to where the rounding sits relative to the training loop, which is what the diagram above is really about: PTQ waits until the weights are frozen and then quantizes once, whereas QAT folds the rounding into every forward pass so the optimiser sees it coming and compensates before anything is frozen.
+The difference comes down to where the rounding sits relative to the training loop, which is what the diagram above is really about: PTQ waits until the weights are frozen and then quantizes once, whereas QAT folds the rounding into every forward pass so the optimizer sees it coming and compensates before anything is frozen.
 
 Put plainly, PTQ is the low-effort path: you point it at a trained model and run it, it wants only a tiny calibration set and a few minutes of compute, and it covers the modern LLMs almost everyone is actually deploying, the Llamas and GPTs of the world. QAT is a full training pipeline that wants the entire training set and days of GPU-hours, and it earns its keep on edge and vision models, or when you are pushing all the way down to INT4.
 

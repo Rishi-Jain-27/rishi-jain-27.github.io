@@ -115,7 +115,7 @@ That number sits below `float32` precision (around `1.2e-38`) and well below `fl
 \left\\| \frac{\partial h_{50}}{\partial h_0} \right\\| \le 1.2^{50} \approx 9100,
 \\]
 
-which is large enough to throw the model clean across the loss landscape in a single update, the exploding gradient. The whole personality of RNN training, the gradient clipping and the careful initialisation of \\( W \\) to a spectral radius near 1 and the obsession with LSTM and GRU gates, is a response to these two regimes living one numerical eyelash apart.
+which is large enough to throw the model clean across the loss landscape in a single update, the exploding gradient. The whole personality of RNN training, the gradient clipping and the careful initialization of \\( W \\) to a spectral radius near 1 and the obsession with LSTM and GRU gates, is a response to these two regimes living one numerical eyelash apart.
 
 The widget below runs exactly this geometric product. The knob along the top sets the per-step factor \\( \gamma = \sigma_1(W) \cdot \lvert f^\prime \rvert \\), and the curve plots the bound \\( \gamma^n \\) across the steps back through time on a log axis, with the `float32` floor drawn in. Drag the knob below 1 and the curve dives through the floor and the gradient is gone after a few dozen steps, leave it at 1 and it rides flat, and push it above 1 and it climbs off the top of the chart.
 
@@ -129,7 +129,7 @@ Gradient clipping rescales the gradient whenever its global norm exceeds a thres
 g \leftarrow g \cdot \min\\!\left(1, \frac{\tau}{\\|g\\|}\right).
 \\]
 
-This is a rescaling rather than a rotation, so the direction is preserved and only the magnitude is capped, and for the exploding case that is precisely what you want, since you have plenty of gradient signal and simply too much of it, and rescaling hands you back a bounded-magnitude step that still points the right way. It does nothing whatever for vanishing gradients, because once a number has underflowed to zero, or to the smallest representable denormal, there is no information left in it to rescale upward, and multiplying zero by any constant is still zero. That is the asymmetry: clipping addresses the case where you have signal you cannot use, and the vanishing case is the one where the signal is simply not there, so clipping handles the explosion in practice while the architectural changes, the LSTM and GRU gates and residual connections and careful initialisation and attention, are what is needed for the vanishing side.
+This is a rescaling rather than a rotation, so the direction is preserved and only the magnitude is capped, and for the exploding case that is precisely what you want, since you have plenty of gradient signal and simply too much of it, and rescaling hands you back a bounded-magnitude step that still points the right way. It does nothing whatever for vanishing gradients, because once a number has underflowed to zero, or to the smallest representable denormal, there is no information left in it to rescale upward, and multiplying zero by any constant is still zero. That is the asymmetry: clipping addresses the case where you have signal you cannot use, and the vanishing case is the one where the signal is simply not there, so clipping handles the explosion in practice while the architectural changes, the LSTM and GRU gates and residual connections and careful initialization and attention, are what is needed for the vanishing side.
 
 ## Why LSTMs were invented
 

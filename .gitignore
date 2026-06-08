@@ -11,6 +11,9 @@ _site
 .bundle/
 vendor/
 
+# Python venv — local tooling (codespell, etc.)
+.venv/
+
 # Source material for in-progress posts — local-only, transient
 source-material/*
 !source-material/.gitkeep

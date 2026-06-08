@@ -121,7 +121,7 @@ That second, calm trace is the one already sitting on zero in the widget below, 
 
 In a real agent we do not keep two fully separate networks just for this, because that would be a lot of extra machinery. We already have two networks lying around for an unrelated reason: training is steadier if the targets are computed from a slightly stale copy of the network rather than the one we are actively changing, so most agents keep the live network being trained, called the online network with parameters \\( \theta \\), alongside a lagging copy whose parameters, written \\( \theta^- \\), are refreshed from the online ones only every so often.
 
-The lag exists to stabilise training, but it conveniently hands us a second, not-quite-identical set of guesses, and Double DQN simply puts the two existing networks to work on the two jobs. The online network selects the action and the lagging copy evaluates it:
+The lag exists to stabilize training, but it conveniently hands us a second, not-quite-identical set of guesses, and Double DQN simply puts the two existing networks to work on the two jobs. The online network selects the action and the lagging copy evaluates it:
 
 \\[
 y^{\text{Double}} \;=\; r + \gamma \, Q\big(s', \; \arg\max_{a'} Q(s', a'; \theta); \; \theta^-\big).
@@ -135,7 +135,7 @@ The change from the plain target is small enough to point at: the action fed int
 
 I have to be straight about one thing, because the clean toy above was a little too kind. In that toy the two estimators were fully independent, which is what made the overshoot vanish completely.
 
-The online network and its lagging copy are not independent in that clean way: the copy is literally an older version of the same network, so when the online network is sitting high on some action, the slightly-older copy was very probably sitting high on it too, their errors leaning the same direction rather than canceling. Because of that overlap, Double DQN shrinks the overshoot rather than erasing it the way the idealised pair of independent estimators would, and how much it shrinks depends on how different the lag manages to keep the two networks.
+The online network and its lagging copy are not independent in that clean way: the copy is literally an older version of the same network, so when the online network is sitting high on some action, the slightly-older copy was very probably sitting high on it too, their errors leaning the same direction rather than canceling. Because of that overlap, Double DQN shrinks the overshoot rather than erasing it the way the idealized pair of independent estimators would, and how much it shrinks depends on how different the lag manages to keep the two networks.
 
 In practice the lag is enough to turn a large bias into a small one, which turns out to be the difference that matters, and the [paper that introduced it](https://arxiv.org/abs/1509.06461) shows exactly this on the Atari games: value estimates that under the plain agent ran several times higher than the returns it actually collected come back down close to reality under Double DQN, and the games where the plain agent was wildest with its optimism are the ones where fixing the estimate buys back the most performance.
 

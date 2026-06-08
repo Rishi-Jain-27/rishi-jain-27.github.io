@@ -8,6 +8,7 @@ exclude:
   - "/vendor/"
   - "source-material/"
   - "CLAUDE.md"
+  - ".venv/"
 
 # Site settings
 title: Rishi Jain

@@ -73,7 +73,7 @@ In the lunar lander game, a ship is landing and needs to ideally land between th
 
 In this game, I implemented the REINFORCE algorithm. You can check out my code [here](https://github.com/Rishi-Jain-27/lunar-lander-rl).
 
-I'd encourage you to atempt to train models using Reinforcement Learning in these environments. It was fun, and a bit of a challenge.
+I'd encourage you to attempt to train models using Reinforcement Learning in these environments. It was fun, and a bit of a challenge.
 
 ## Future Posts
 Here are some upcoming blog posts:

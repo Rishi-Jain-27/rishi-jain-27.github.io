@@ -99,7 +99,7 @@ Which height? Average both sides of the equation over the actions. On the right 
 \frac{1}{\vert \mathcal{A} \vert} \sum_{a} Q(s, a) \;=\; V(s).
 \\]
 
-So the value stream is pinned to mean exactly the average Q-value of the state, which is a thoroughly sensible thing for "the value of the state" to mean. In the waterline widget this is the button labelled "V to mean(Q)": it drops the line straight onto the average of the four bars, the one height where the gold gaps above and the red gaps below balance out and the advantages sum to zero.
+So the value stream is pinned to mean exactly the average Q-value of the state, which is a thoroughly sensible thing for "the value of the state" to mean. In the waterline widget this is the button labeled "V to mean(Q)": it drops the line straight onto the average of the four bars, the one height where the gold gaps above and the red gaps below balance out and the advantages sum to zero.
 
 Run it back through the worked example to watch the pinning bite. The state with Q-values \\( (2, 2, 5) \\) has average \\( 3 \\), so the mean-subtracted split is \\( V = 3 \\) with advantages \\( (-1, -1, 2) \\), which do sum to zero, and recombining gives \\( (2, 2, 5) \\) back.
 

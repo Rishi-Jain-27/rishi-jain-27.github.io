@@ -25,19 +25,19 @@ This matters because the usual failure mode of a practice site is that a broken 
 
 ## The Pegasos problem
 
-The one I fixed is the kernelised Pegasos SVM, problem 21. Pegasos is a stochastic sub-gradient method for the soft-margin SVM, and the kernel version keeps a coefficient \\( \alpha_i \\) for each training point and predicts with the decision function
+The one I fixed is the kernelized Pegasos SVM, problem 21. Pegasos is a stochastic sub-gradient method for the soft-margin SVM, and the kernel version keeps a coefficient \\( \alpha_i \\) for each training point and predicts with the decision function
 
 \\[ f(x_i) = \sum_j \alpha_j y_j K(x_j, x_i) + b \\]
 
-where \\( K \\) is the kernel, \\( y_j \\) the label, and the step size \\( \eta = \frac{1}{\lambda t} \\) shrinks as the iteration count \\( t \\) climbs. The thing to hold onto is that the sign of each point's contribution is carried by \\( y_j \\) sitting right there in the sum, which means \\( \alpha_j \\) itself is meant to be an unsigned magnitude. The label tells you which side, and \\( \alpha \\) tells you how much. Keep that division of labour in mind, because the bug is precisely a violation of it.
+where \\( K \\) is the kernel, \\( y_j \\) the label, and the step size \\( \eta = \frac{1}{\lambda t} \\) shrinks as the iteration count \\( t \\) climbs. The thing to hold onto is that the sign of each point's contribution is carried by \\( y_j \\) sitting right there in the sum, which means \\( \alpha_j \\) itself is meant to be an unsigned magnitude. The label tells you which side, and \\( \alpha \\) tells you how much. Keep that division of labor in mind, because the bug is precisely a violation of it.
 
-When the margin on point \\( i \\) is violated, meaning \\( y_i f(x_i) < 1 \\), Pegasos applies the regularisation shrink and a step toward fixing the violation, and when the margin is satisfied it applies the shrink alone. Written as updates, the two cases are
+When the margin on point \\( i \\) is violated, meaning \\( y_i f(x_i) < 1 \\), Pegasos applies the regularization shrink and a step toward fixing the violation, and when the margin is satisfied it applies the shrink alone. Written as updates, the two cases are
 
 \\[ \alpha_i \leftarrow (1 - \eta \lambda)\,\alpha_i + \eta \qquad \text{(margin violated)} \\]
 
 \\[ \alpha_i \leftarrow (1 - \eta \lambda)\,\alpha_i \qquad \text{(margin satisfied)} \\]
 
-with the bias moving as \\( b \leftarrow b + \eta y_i \\) on a violation. The shrink term \\( (1 - \eta \lambda) \\) is the regularisation, and it pulls every coefficient toward zero on every single step regardless of which branch you are in, which is what stops the coefficients running away.
+with the bias moving as \\( b \leftarrow b + \eta y_i \\) on a violation. The shrink term \\( (1 - \eta \lambda) \\) is the regularization, and it pulls every coefficient toward zero on every single step regardless of which branch you are in, which is what stops the coefficients running away.
 
 The reference solution had two faults, and they compound. Here is the inner loop as it stood, with my change:
 
@@ -51,9 +51,9 @@ if labels[i] * decision < 1:
 +   alphas[i] = (1 - (eta * lambda_val)) * alphas[i]
 ```
 
-Expand the original violation line and it reads \\( \alpha_i \leftarrow (1 - \eta \lambda)\,\alpha_i + \eta y_i \\), which differs from the correct update by that trailing \\( y_i \\). On its own a stray label looks harmless, but the decision function already multiplies \\( \alpha_j \\) by \\( y_j \\), so baking the sign into \\( \alpha \\) as well counts the label twice: a negative point pushes its coefficient negative, and then the \\( \alpha_j y_j \\) product flips it back, so the magnitude and the sign are now fighting each other through the same variable. The coefficients stop being unsigned magnitudes and start drifting toward \\( \pm 100 \\), which is exactly the runaway the regularisation is supposed to prevent, and it is no longer preventing it because the update has quietly changed what \\( \alpha \\) means.
+Expand the original violation line and it reads \\( \alpha_i \leftarrow (1 - \eta \lambda)\,\alpha_i + \eta y_i \\), which differs from the correct update by that trailing \\( y_i \\). On its own a stray label looks harmless, but the decision function already multiplies \\( \alpha_j \\) by \\( y_j \\), so baking the sign into \\( \alpha \\) as well counts the label twice: a negative point pushes its coefficient negative, and then the \\( \alpha_j y_j \\) product flips it back, so the magnitude and the sign are now fighting each other through the same variable. The coefficients stop being unsigned magnitudes and start drifting toward \\( \pm 100 \\), which is exactly the runaway the regularization is supposed to prevent, and it is no longer preventing it because the update has quietly changed what \\( \alpha \\) means.
 
-The second fault is the missing `else`. The original code only ever touched \\( \alpha_i \\) when the margin was violated, so a point that was comfortably classified never had its coefficient decayed at all, when Pegasos wants that \\( (1 - \eta \lambda) \\) shrink applied on every iteration. The fix is the two-line `else` that applies the shrink in the satisfied case, which is the half of the regularisation that had simply gone missing.
+The second fault is the missing `else`. The original code only ever touched \\( \alpha_i \\) when the margin was violated, so a point that was comfortably classified never had its coefficient decayed at all, when Pegasos wants that \\( (1 - \eta \lambda) \\) shrink applied on every iteration. The fix is the two-line `else` that applies the shrink in the satisfied case, which is the half of the regularization that had simply gone missing.
 
 What made this more than a one-line solution patch is that the hidden tests had been written against the broken solution, so they asserted the wrong answers, the saturated `[100.0, 0.0, -100.0, -100.0]` rather than the `[2.0, 2.0, 6.0, 1.0]` the stated algorithm actually produces. Fixing the solution without fixing the tests would just move the failure, so both had to change together, and the test outputs in the corrected version are the ones you get by running the algorithm the problem describes. The write-up is in [issue 592](https://github.com/Open-Deep-ML/DML-OpenProblem/issues/592) and the fix is up as [pull request 593](https://github.com/Open-Deep-ML/DML-OpenProblem/pull/593), which is in review rather than merged as I write this, so the specifics may yet shift before it lands.
 
