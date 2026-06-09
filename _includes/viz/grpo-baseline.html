@@ -1,0 +1,276 @@
+<!-- Interactive GRPO group-relative-baseline widget. One prompt is answered by a
+     group of G completions, each scored by a verifier into a reward in [0,1].
+     The bars are those rewards and are draggable. The waterline is NOT something
+     you set: it is the group mean, the baseline GRPO uses, and it moves as a
+     consequence of dragging any bar. The gap between a bar top and the waterline
+     is that completion's edge over the group average; dividing every gap by the
+     group's standard deviation gives the advantage A_i = (R_i - mean)/std that
+     each token in that completion inherits. Gold above the line is reinforced,
+     red below is penalised. When every reward is equal the spread is zero, the
+     advantages collapse, and the prompt produces no gradient at all. This is the
+     inverse interaction of the dueling-decomposition widget, and reuses the same
+     .quant-viz theme classes from css/main.scss. Self-contained, dependency-free.
+     Usage in a post:  {% raw %}{% include viz/grpo-baseline.html %}{% endraw %} -->
+<figure class="quant-viz gr-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Reward pattern across the group">
+      <button type="button" data-gr-preset="spread">varied</button>
+      <button type="button" data-gr-preset="onewrong">one wrong</button>
+      <button type="button" data-gr-preset="split">half right</button>
+      <button type="button" data-gr-preset="allright">all right</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Group size">
+      <button type="button" data-gr-size="4">G 4</button>
+      <button type="button" data-gr-size="6">G 6</button>
+      <button type="button" data-gr-size="8">G 8</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="A row of bars, one per completion in the group, each as tall as that completion's reward between 0 and 1. A dashed horizontal waterline sits at the group mean, which is the baseline. The gap between each bar top and the waterline is filled gold where the bar is above the mean and red where it is below; the number above each bar is its advantage, the gap divided by the group's standard deviation. Drag any bar up or down and the waterline moves to the new mean, so every other completion's advantage shifts at the same time. When all the bars are level the spread is zero and every advantage is zero, so the prompt gives no gradient."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>mean (baseline)</b><span data-gr="mean" style="color:#ebc999">—</span></span>
+    <span><b>std (spread)</b><span data-gr="std">—</span></span>
+    <span><b>strongest push</b><span data-gr="big" style="color:#d4af7a">—</span></span>
+    <span><b>signal</b><span data-gr="sig">—</span></span>
+  </div>
+  <figcaption>Each bar is one completion's <span class="quant-a">reward</span> for the same prompt, and the <span style="color:#ebc999">waterline</span> is the group mean, the baseline GRPO subtracts. You do not get to set it: drag any bar and the waterline slides to the new average, so every completion's advantage <span class="quant-a">A<sub>i</sub> = (R<sub>i</sub> − mean) / std</span> changes together, which is the whole sense in which the scoring is group relative. The gold or red gap is the raw edge over the group, and dividing it by the spread is what makes the advantages comparable across prompts; the sign and the order you see are exactly the advantages. Every token in a completion inherits its one number. Try “all right”: the bars go level, the spread collapses to zero, and there is nothing left to push apart, so a prompt the model already aces teaches it nothing.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__grVizBooted) return;
+    window.__grVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      err: '#e08a7a'
+    };
+
+    var LO = 0, HI = 1;        /* reward axis */
+    var EPS = 1e-6;            /* below this spread, the group gives no signal */
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['mean', 'std', 'big', 'sig'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-gr="' + k + '"]');
+      });
+
+      var R = [0.9, 0.4, 0.7, 0.2, 1.0, 0.5];
+      var size = 6;
+      var preset = 'spread';
+
+      function mean(arr) { var s = 0; for (var i = 0; i < arr.length; i++) s += arr[i]; return s / arr.length; }
+      function std(arr) {
+        var m = mean(arr), s = 0;
+        for (var i = 0; i < arr.length; i++) { var d = arr[i] - m; s += d * d; }
+        return Math.sqrt(s / arr.length);   /* population std, matches the post's worked example */
+      }
+      function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+      function rnd(n) { return Math.round(n * 20) / 20; }   /* snap to 0.05 */
+
+      function buildPreset(name, n) {
+        var a = [], i;
+        if (name === 'onewrong') { for (i = 0; i < n; i++) a.push(1); a[n - 1] = 0; }
+        else if (name === 'split') { for (i = 0; i < n; i++) a.push(i < Math.floor(n / 2) ? 0 : 1); }
+        else if (name === 'allright') { for (i = 0; i < n; i++) a.push(1); }
+        else { for (i = 0; i < n; i++) a.push(rnd(0.15 + Math.random() * 0.8)); }
+        return a;
+      }
+      function setPreset(name) { preset = name; R = buildPreset(name, size); }
+      function setSize(n) { size = n; R = buildPreset(preset, n); }
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 40, padR = 150, padT = 40, padB = 40;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 340;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      function plotTop() { return padT; }
+      function plotBot() { return h - padB; }
+      function yOf(v) { return plotBot() - (v - LO) / (HI - LO) * (plotBot() - plotTop()); }
+      function vOf(y) { return LO + (plotBot() - y) / (plotBot() - plotTop()) * (HI - LO); }
+
+      function geom() {
+        var x0 = padL, x1 = w - padR, n = R.length;
+        var slot = (x1 - x0) / n;
+        var bw = Math.min(slot * 0.46, 46);
+        return { x0: x0, x1: x1, n: n, slot: slot, bw: bw };
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var g = geom(), x0 = g.x0, x1 = g.x1, n = g.n, slot = g.slot, bw = g.bw;
+        var m = mean(R), sd = std(R), live = sd > EPS;
+
+        /* axis ticks at 0, 0.5, 1 */
+        ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+        ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'right';
+        [0, 0.5, 1].forEach(function (t) {
+          var ty = yOf(t);
+          ctx.beginPath(); ctx.moveTo(x0, ty); ctx.lineTo(x1, ty); ctx.stroke();
+          ctx.fillText(t.toFixed(1), x0 - 6, ty + 3.5);
+        });
+
+        /* status line */
+        ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillStyle = live ? C.dim : C.err;
+        ctx.fillText(live ? 'drag a bar' : 'no spread → no gradient', x0, plotTop() - 14);
+
+        var wy = yOf(m), baseY = yOf(LO);
+
+        /* advantage segments behind the bars: gap between bar top and the mean */
+        for (var s = 0; s < n; s++) {
+          var xcs = x0 + slot * (s + 0.5);
+          var qy = yOf(R[s]);
+          var above = R[s] >= m;
+          var segTop = Math.min(qy, wy), segH = Math.abs(qy - wy);
+          ctx.fillStyle = above ? 'rgba(212,175,122,0.34)' : 'rgba(224,138,122,0.30)';
+          ctx.fillRect(xcs - bw / 2, segTop, bw, segH);
+        }
+
+        /* the reward bars (draggable), neutral gold like the dueling widget */
+        for (var i = 0; i < n; i++) {
+          var xc = x0 + slot * (i + 0.5);
+          var topY = yOf(R[i]);
+          ctx.fillStyle = 'rgba(212,175,122,0.10)';
+          ctx.strokeStyle = 'rgba(212,175,122,0.55)'; ctx.lineWidth = 1.4;
+          ctx.fillRect(xc - bw / 2, topY, bw, baseY - topY);
+          ctx.strokeRect(xc - bw / 2, topY, bw, baseY - topY);
+          /* a grab cap on the bar top */
+          ctx.fillStyle = C.accentHi;
+          ctx.fillRect(xc - bw / 2, topY - 2, bw, 3);
+
+          /* advantage above the bar, reward and label below */
+          var adv = live ? (R[i] - m) / sd : 0;
+          ctx.font = monoSm; ctx.textAlign = 'center';
+          ctx.fillStyle = adv > 0 ? C.accent : (adv < 0 ? C.err : C.dim);
+          ctx.fillText('A ' + (adv >= 0 ? '+' : '') + adv.toFixed(2), xc, topY - 8);
+          ctx.fillStyle = C.muted;
+          ctx.fillText(R[i].toFixed(2), xc, baseY + 14);
+          ctx.fillStyle = C.dim;
+          ctx.fillText('c' + (i + 1), xc, baseY + 27);
+        }
+
+        /* the group-mean waterline (computed, not chosen) */
+        ctx.strokeStyle = C.accentHi; ctx.lineWidth = 2.4; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, wy); ctx.lineTo(x1, wy); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.accentHi;
+        ctx.beginPath(); ctx.arc(x1, wy, 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillText('mean(R) = ' + m.toFixed(2), x1 + 8, wy - 6);
+        ctx.fillStyle = C.dim; ctx.font = monoSm;
+        ctx.fillText('the baseline', x1 + 8, wy + 10);
+
+        updateReadout(m, sd, live);
+      }
+
+      function updateReadout(m, sd, live) {
+        out.mean.textContent = m.toFixed(2);
+        out.std.textContent = sd.toFixed(2);
+        if (!live) {
+          out.big.textContent = 'none';
+          out.sig.textContent = 'flat group, no gradient';
+          out.sig.style.color = C.err;
+          return;
+        }
+        var adv = R.map(function (r) { return (r - m) / sd; });
+        var lo = Math.min.apply(null, adv), hi = Math.max.apply(null, adv);
+        var mag = Math.abs(lo) > Math.abs(hi) ? lo : hi;
+        out.big.textContent = (mag >= 0 ? '+' : '') + mag.toFixed(2) + (mag < 0 ? ' (a failure)' : ' (a winner)');
+        out.sig.textContent = 'advantages span ' + lo.toFixed(2) + ' to +' + hi.toFixed(2);
+        out.sig.style.color = C.muted;
+      }
+
+      /* ---------- dragging a bar sets its reward; the mean follows ---------- */
+      var dragIdx = -1;
+      function locate(ev) {
+        var rect = canvas.getBoundingClientRect();
+        var px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+        var py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+        return { px: px, py: py };
+      }
+      function barAt(px) {
+        var g = geom();
+        for (var i = 0; i < g.n; i++) {
+          var xc = g.x0 + g.slot * (i + 0.5);
+          if (Math.abs(px - xc) <= g.slot * 0.5) return i;
+        }
+        return -1;
+      }
+      function startDrag(ev) {
+        var p = locate(ev);
+        dragIdx = barAt(p.px);
+        if (dragIdx < 0) return;
+        R[dragIdx] = clamp(vOf(p.py), LO, HI);
+        preset = 'custom';
+        syncToggles();
+        draw(); ev.preventDefault();
+      }
+      function moveDrag(ev) {
+        if (dragIdx < 0) return;
+        var p = locate(ev);
+        R[dragIdx] = clamp(vOf(p.py), LO, HI);
+        draw(); ev.preventDefault();
+      }
+      function endDrag() { dragIdx = -1; }
+      canvas.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+      canvas.addEventListener('touchstart', startDrag, { passive: false });
+      canvas.addEventListener('touchmove', moveDrag, { passive: false });
+      window.addEventListener('touchend', endDrag);
+
+      /* ---------- controls ---------- */
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-gr-size]'), function (b) {
+          b.classList.toggle('is-on', parseInt(b.dataset.grSize, 10) === size);
+        });
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-gr-preset]'), function (b) {
+          b.classList.toggle('is-on', b.dataset.grPreset === preset);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-gr-preset]'), function (b) {
+        b.addEventListener('click', function () { setPreset(b.dataset.grPreset); syncToggles(); draw(); });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-gr-size]'), function (b) {
+        b.addEventListener('click', function () { setSize(parseInt(b.dataset.grSize, 10)); syncToggles(); draw(); });
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.gr-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>
