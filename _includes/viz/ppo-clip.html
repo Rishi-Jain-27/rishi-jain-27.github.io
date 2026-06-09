@@ -1,0 +1,205 @@
+<!-- Interactive PPO clipped-objective widget. Plots the per-sample surrogate
+     objective as a function of the probability ratio r = pi_new / pi_old:
+     the unclipped term r*A (dashed) and PPO's clipped objective
+     min(r*A, clip(r, 1-eps, 1+eps)*A) (solid gold). Toggle the sign of the
+     advantage A and the clip width eps. When A > 0 the objective flattens once
+     r climbs past 1+eps, killing the gradient that would push the policy
+     further; when A < 0 it flattens once r drops below 1-eps. The shaded band
+     is the trust region [1-eps, 1+eps], and the vertical line at r = 1 is where
+     the new policy matches the old one. Reuses the .quant-viz theme classes from
+     css/main.scss. Self-contained, dependency-free.
+
+     Usage in a post:  {% raw %}{% include viz/ppo-clip.html %}{% endraw %} -->
+<figure class="quant-viz pc-viz">
+  <div class="quant-viz-bar">
+    <div class="quant-viz-bits" role="group" aria-label="Sign of the advantage">
+      <button type="button" data-pc-sign="1">A &gt; 0</button>
+      <button type="button" data-pc-sign="-1">A &lt; 0</button>
+    </div>
+    <div class="quant-viz-bits" role="group" aria-label="Clip width epsilon">
+      <button type="button" data-pc-eps="0.1">ε 0.1</button>
+      <button type="button" data-pc-eps="0.2">ε 0.2</button>
+      <button type="button" data-pc-eps="0.3">ε 0.3</button>
+    </div>
+  </div>
+  <canvas class="quant-viz-canvas" role="img"
+          aria-label="The surrogate objective plotted against the probability ratio r between the new and old policy. The dashed line is the unclipped objective r times the advantage, a straight line through the origin. The gold line is PPO's clipped objective, which follows the dashed line inside the band from 1 minus epsilon to 1 plus epsilon and then goes flat. For a positive advantage it flattens above 1 plus epsilon; for a negative advantage it flattens below 1 minus epsilon. Where the gold line is flat its gradient is zero, so the update has no reason to move the ratio any further in that direction."></canvas>
+  <div class="quant-viz-readout" aria-live="polite">
+    <span><b>A</b><span data-pc="a">—</span></span>
+    <span><b>ε</b><span data-pc="e">—</span></span>
+    <span><b>clip range</b><span data-pc="r" style="color:#d4af7a">—</span></span>
+    <span><b>gradient past the clip</b><span data-pc="g">—</span></span>
+  </div>
+  <figcaption>The dashed line is the unclipped objective <span class="quant-a">r·A</span>, which rewards moving the ratio <span class="quant-a">r = π<sub>new</sub>/π<sub>old</sub></span> as far as the advantage points. The gold line is PPO's <span class="quant-a">min(r·A, clip(r, 1−ε, 1+ε)·A)</span>: inside the shaded band the two agree, and past it the objective goes flat, so once an update has moved the policy by <span class="quant-a">ε</span> in the rewarded direction there is no gradient left to push it further. Flip the sign of <span class="quant-a">A</span> and the flat side flips with it.</figcaption>
+</figure>
+
+<script>
+  (function () {
+    if (window.__pcVizBooted) return;
+    window.__pcVizBooted = true;
+
+    /* Mirror of the SCSS theme tokens (css/main.scss). */
+    var C = {
+      grid: '#2c2d3a', axis: '#4a4b5a', rule: '#363745',
+      muted: '#adadba', dim: '#797a85', fg: '#f0f0f5',
+      accent: '#d4af7a', accentHi: '#ebc999',
+      blue: '#8aa9e0'
+    };
+
+    var R0 = 0.4, R1 = 1.8;      /* ratio range on the x-axis */
+    var G = 280;                 /* sample points along the curve */
+
+    function clamp(x, lo, hi) { return x < lo ? lo : (x > hi ? hi : x); }
+
+    function initOne(fig) {
+      if (fig.dataset.ready) return;
+      fig.dataset.ready = '1';
+
+      var canvas = fig.querySelector('.quant-viz-canvas');
+      var ctx = canvas.getContext('2d');
+      var out = {};
+      ['a', 'e', 'r', 'g'].forEach(function (k) {
+        out[k] = fig.querySelector('[data-pc="' + k + '"]');
+      });
+
+      var sign = 1;     /* sign of the advantage, magnitude fixed at 1 */
+      var eps = 0.2;
+
+      var w = 0, h = 0, dpr = 1;
+      var padL = 16, padR = 16, padT = 22, padB = 30;
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1;
+        w = canvas.clientWidth || fig.clientWidth || 600;
+        h = 300;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      var mono = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      var monoSm = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      /* objective value range is [-(1+eps_max), +(1+eps_max)] worth of room;
+         fix the y-window so flipping the sign keeps the same scale */
+      var YMAX = R1;   /* the largest |r*A| we ever draw, at r = R1, |A| = 1 */
+
+      function xOf(r) { return padL + (r - R0) / (R1 - R0) * (w - padL - padR); }
+      function yOf(v) {
+        var yTop = padT, yBot = h - padB;
+        var mid = (yTop + yBot) / 2;
+        return mid - (v / YMAX) * ((yBot - yTop) / 2);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var x0 = padL, x1 = w - padR, yTop = padT, yBot = h - padB;
+        var A = sign;
+        var lo = 1 - eps, hi = 1 + eps;
+
+        /* shaded trust region [1-eps, 1+eps] */
+        ctx.fillStyle = 'rgba(212,175,122,0.08)';
+        ctx.fillRect(xOf(lo), yTop, xOf(hi) - xOf(lo), yBot - yTop);
+
+        /* zero axis */
+        ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x0, yOf(0)); ctx.lineTo(x1, yOf(0)); ctx.stroke();
+
+        /* vertical line at r = 1 (new policy equals old) */
+        ctx.strokeStyle = C.rule; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(xOf(1), yTop); ctx.lineTo(xOf(1), yBot); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C.dim; ctx.font = monoSm; ctx.textAlign = 'center';
+        ctx.fillText('r = 1', xOf(1), yBot + 16);
+
+        /* clip-band edges */
+        ctx.fillStyle = C.accent;
+        ctx.fillText('1−ε', xOf(lo), yBot + 16);
+        ctx.fillText('1+ε', xOf(hi), yBot + 16);
+
+        /* unclipped objective r*A, dashed */
+        ctx.strokeStyle = C.dim; ctx.lineWidth = 1.4; ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        for (var i = 0; i < G; i++) {
+          var r = R0 + (R1 - R0) * i / (G - 1);
+          var px = xOf(r), py = yOf(r * A);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        /* clipped objective min(r*A, clip(r)*A), solid gold */
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (var j = 0; j < G; j++) {
+          var rr = R0 + (R1 - R0) * j / (G - 1);
+          var obj = Math.min(rr * A, clamp(rr, lo, hi) * A);
+          var qx = xOf(rr), qy = yOf(obj);
+          if (j === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
+        }
+        ctx.stroke();
+
+        /* dot where the objective stops following the unclipped line, i.e.
+           where the gradient is killed: r = 1+eps for A>0, r = 1-eps for A<0 */
+        var rKink = A > 0 ? hi : lo;
+        var vKink = rKink * A;
+        ctx.fillStyle = C.accentHi;
+        ctx.beginPath(); ctx.arc(xOf(rKink), yOf(vKink), 3.5, 0, Math.PI * 2); ctx.fill();
+
+        /* labels for the two curves */
+        ctx.font = mono; ctx.textAlign = 'left';
+        ctx.fillStyle = C.dim;
+        ctx.fillText('r·A', xOf(R1) - 34, yOf(R1 * A) + (A > 0 ? -6 : 14));
+        ctx.fillStyle = C.accent;
+        var labelR = A > 0 ? (R0 + 0.06) : (R1 - 0.40);
+        ctx.fillText('clipped', xOf(labelR), yOf(clamp(labelR, lo, hi) * A) + (A > 0 ? 16 : -8));
+
+        updateReadout(lo, hi);
+      }
+
+      function updateReadout(lo, hi) {
+        out.a.textContent = sign > 0 ? '+1 (good action)' : '−1 (bad action)';
+        out.e.textContent = eps.toFixed(2);
+        out.r.textContent = '[' + lo.toFixed(2) + ', ' + hi.toFixed(2) + ']';
+        out.g.textContent = '0 (flat)';
+      }
+
+      function syncToggles() {
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-pc-sign]'), function (b) {
+          b.classList.toggle('is-on', parseInt(b.dataset.pcSign, 10) === sign);
+        });
+        Array.prototype.forEach.call(fig.querySelectorAll('[data-pc-eps]'), function (b) {
+          b.classList.toggle('is-on', parseFloat(b.dataset.pcEps) === eps);
+        });
+      }
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-pc-sign]'), function (b) {
+        b.addEventListener('click', function () {
+          sign = parseInt(b.dataset.pcSign, 10); syncToggles(); draw();
+        });
+      });
+      Array.prototype.forEach.call(fig.querySelectorAll('[data-pc-eps]'), function (b) {
+        b.addEventListener('click', function () {
+          eps = parseFloat(b.dataset.pcEps); syncToggles(); draw();
+        });
+      });
+
+      var raf = null;
+      window.addEventListener('resize', function () {
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; resize(); });
+      });
+
+      syncToggles();
+      resize();
+    }
+
+    function boot() {
+      Array.prototype.forEach.call(document.querySelectorAll('.pc-viz'), initOne);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else { boot(); }
+  })();
+</script>
