@@ -12,8 +12,16 @@ ML Researcher and Engineer specializing in Mechanistic Interpretability, Reinfor
 ## Featured Projects
 
 ### CodeFlow
-Visualizes complex codebases by automatically converting source code into Mermaid.js flowcharts.
-* **Tech:** Gradio, HTML, llama.cpp, Qwen-Coder-30B (Dynamic Quantization).
+Paste code and a fully local model draws an animated control-flow flowchart, with every node wired back to the exact source lines it came from. Hover a node to highlight its lines, click to jump-and-edit, or move the cursor over a line to light up the matching node. Built for the Hugging Face Build Small Hackathon 2026 (hosted by Gradio; backed by OpenBMB, OpenAI, NVIDIA, Modal, Cohere, JetBrains, and Black Forest Labs).
+* **Model:** A LoRA fine-tune of Qwen3-Coder-30B-A3B, a Mixture-of-Experts coder with only ~3.3B active params per token, run on CPU via llama.cpp. The sparse activation is what makes a 30B-class model viable without a GPU. Served as a ~3-bit GGUF (~16 GB).
+* **Training data:** 2,400 synthetic code-to-flowchart pairs across Python, JavaScript, C, and C++, spanning 22 control-flow patterns. Every example is correct-by-construction (targets validated with `compile()`, `node --check`, and real compilers), with labels using plain-English paraphrasing rather than raw code to fix the base model's main formatting failure mode.
+* **Reliability:** A strict system prompt (banned vocabulary, few-shot examples, a `<thinking>` reasoning channel) plus a server-side regex sanitizer. The model emits a `<linemap>` validated against the source, which powers the node-to-code linking.
+* **Tech:** Gradio, llama.cpp, Qwen3-Coder-30B-A3B (MoE), LoRA fine-tuning, ~3-bit GGUF.
+* **Live demo:** [https://huggingface.co/spaces/build-small-hackathon/CodeFlow](https://huggingface.co/spaces/build-small-hackathon/CodeFlow)
+* **Demo video:** [https://www.youtube.com/watch?v=R5GbpN9FVxo](https://www.youtube.com/watch?v=R5GbpN9FVxo)
+* **Build journal:** [https://huggingface.co/blog/build-small-hackathon/codeflow-field-notes](https://huggingface.co/blog/build-small-hackathon/codeflow-field-notes)
+* **Fine-tuned model:** [https://huggingface.co/build-small-hackathon/codeflow-qwen-3-finetuning](https://huggingface.co/build-small-hackathon/codeflow-qwen-3-finetuning)
+* **Agent traces dataset:** [https://huggingface.co/datasets/build-small-hackathon/codeflow-agent-traces](https://huggingface.co/datasets/build-small-hackathon/codeflow-agent-traces)
 
 ### Support Ticket Triage Agent
 An intelligent agent utilizing RAG to automate customer support workflows for companies like Anthropic and HackerRank.
@@ -37,14 +45,24 @@ Implementation of foundational RL algorithms from scratch for complex environmen
 * **Flappy Bird:** Implemented DQL with Dueling and Double DQN extensions.
 * **Link:** [GitHub Profile](https://github.com/Rishi-Jain-27)
 
+### Blackjack RL
+PyTorch implementations from scratch of Group-Relative Policy Optimization (GRPO) and Robust Policy Optimization (RPO), solving the Blackjack-v1 environment from Gymnasium. Hyperparameters are configurable per experiment, with automatic logging, best-model checkpointing, and live reward/epsilon plots.
+* **Tech:** Python 3.11, PyTorch, Gymnasium.
+* **References:** [DeepSeekMath (GRPO)](https://arxiv.org/pdf/2402.03300), [Robust Policy Optimization in Deep RL](https://arxiv.org/pdf/2212.07536).
+* **Link:** [GitHub](https://github.com/Rishi-Jain-27/blackjack-rl)
+
 ## Blog & Notes
 Check out my [personal blog](https://rishi-jain-27.github.io/) for technical deep dives, project walkthroughs, and conceptual notes on deep learning.
+
+## Video
+**Deep-ML on YouTube:** videos solving difficult ML problems often asked in interviews. [Channel](https://www.youtube.com/channel/UChDRQZ09TgLYxzI1LFrUoqQ)
 
 ## Connect
 * **GitHub:** [https://github.com/Rishi-Jain-27](https://github.com/Rishi-Jain-27)
 * **LinkedIn:** [https://www.linkedin.com/in/rishi-jain-14a98a405/](https://www.linkedin.com/in/rishi-jain-14a98a405/)
 * **Portfolio:** [https://rishi-jain-27.github.io/](https://rishi-jain-27.github.io/)
 * **Hugging Face:** [https://huggingface.co/Rishi-Jain-27](https://huggingface.co/Rishi-Jain-27)
+* **YouTube (Deep-ML):** [https://www.youtube.com/channel/UChDRQZ09TgLYxzI1LFrUoqQ](https://www.youtube.com/channel/UChDRQZ09TgLYxzI1LFrUoqQ)
 
 ## Contact
 * **Name:** Rishi
