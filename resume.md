@@ -78,7 +78,7 @@ National Honor Society (Randolph W. Thrower Chapter)
 ## Open Source &amp; Technical Writing
 
 - Contributed to **Deep-ML** (deep-ml.com), an open platform of interview-style machine learning coding problems, as an open-source contributor.
-- Produce machine learning problem walkthrough videos on the **Deep-ML YouTube channel**, solving difficult ML problems frequently asked in technical interviews.
+- Produced machine learning problem walkthrough videos on my **YouTube channel**, solving difficult ML problems frequently asked in technical interviews.
 - Authored an ongoing technical blog documenting AI project development and conceptual deep dives across reinforcement learning (PPO, GRPO), world models, and deep-learning fundamentals; published on personal website.
 
 ---
@@ -159,6 +159,11 @@ National Honor Society (Randolph W. Thrower Chapter)
 - Judged and coached at the Middle School Tournament of Champions — one of the most competitive middle school tournaments nationally — despite most experienced judges declining these rounds.
 - Coached teams to champion and runner-up finishes at GFCA Second Year State Championships.
 - Coached a team to win the First Year National Championship and earn the Top Speaker award.
+
+### Debate Judge — Emory National Debate Institute
+*Grade 11*
+
+- Judged high school debaters entering policy debate at the Emory National Debate Institute, providing detailed feedback that helped these students grow as speakers, critical thinkers, and researchers.
 
 ### PeerKonnect Tutor
 *Grade 11*
