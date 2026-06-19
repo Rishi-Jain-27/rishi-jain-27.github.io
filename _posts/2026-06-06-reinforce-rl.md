@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "REINFORCE, landing on planets, and playing Flappy-Bird"
+title: "REINFORCE on a lunar lander and Flappy Bird"
 author: "Rishi Jain"
 date: 2026-06-06
 categories: projects

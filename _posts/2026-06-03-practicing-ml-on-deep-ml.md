@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Practicing ML on Deep-ML, and fixing one of its problems"
+title: "Practicing ML from scratch on Deep-ML"
 author: "Rishi Jain"
 date: 2026-06-03
 categories: projects

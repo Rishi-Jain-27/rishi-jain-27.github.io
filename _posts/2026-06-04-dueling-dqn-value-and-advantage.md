@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Dueling DQN, and splitting a state's worth from an action's"
+title: "Dueling DQN: splitting state value from action advantage"
 author: "Rishi Jain"
 date: 2026-06-04
 categories: notes

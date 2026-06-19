@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Soft Actor-Critic, and paying the agent to stay unsure"
+title: "Soft Actor-Critic: paying an agent to stay unsure"
 author: "Rishi Jain"
 date: 2026-06-08
 categories: notes

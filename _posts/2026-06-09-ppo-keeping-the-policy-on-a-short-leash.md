@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "PPO, and keeping the policy on a short leash"
+title: "PPO as a stack of repairs to the policy gradient"
 author: "Rishi Jain"
 date: 2026-06-09
 categories: notes

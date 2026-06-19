@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "GRPO, and letting the group be the baseline"
+title: "GRPO and the critic it throws away"
 author: "Rishi Jain"
 date: 2026-06-09
 categories: notes

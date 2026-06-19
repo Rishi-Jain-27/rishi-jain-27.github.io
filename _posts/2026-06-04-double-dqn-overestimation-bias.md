@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Double DQN, and the trouble with taking the max"
+title: "Double DQN: why the max leans high"
 author: "Rishi Jain"
 date: 2026-06-04
 categories: notes

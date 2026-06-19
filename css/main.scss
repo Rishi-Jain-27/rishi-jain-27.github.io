@@ -554,6 +554,44 @@ table tbody tr:nth-child(even) td {
   transform: translate(1px, -1px);
 }
 
+/* ----- CV page (embedded PDF viewer) ----- */
+.cv-intro {
+  color: $fg-muted;
+}
+.cv-embed {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 94vw;
+  max-width: 1000px;
+  height: 85vh;
+  margin: 1.75rem 0 0.5rem;
+  border: 1px solid $rule;
+  border-radius: 8px;
+  overflow: hidden;
+  background: $bg-elev;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+.cv-embed object {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cv-embed-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+  color: $fg-muted;
+}
+@media (max-width: 600px) {
+  .cv-embed { height: 70vh; }
+}
+
 .post-meta {
   display: flex;
   justify-content: space-between;

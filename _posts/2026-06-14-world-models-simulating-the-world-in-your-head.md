@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "World models, and simulating the world in your head"
+title: "World models and the text ceiling"
 author: "Rishi Jain"
 date: 2026-06-14
 categories: notes
