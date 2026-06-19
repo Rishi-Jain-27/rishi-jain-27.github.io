@@ -147,6 +147,8 @@ National Honor Society (Randolph W. Thrower Chapter)
 - **AP Scholar with Distinction, CollegeBoard** — awarded for an average score of 3.5+ across all AP exams and scores of 3+ on five or more
 - **NSDA Academic All American** — Awarded to 33 students in Woodward history (Grade 12)
 - **NSDA Outstanding Distinction** — 1,255+ points for participation, judging, and coaching (Grade 11)
+- **Georgia Certificate of Merit** — awarded to students in the top 10% of their class, recognizing superior scholastic achievement across the first three years of high school
+- **Phi Beta Kappa Award** — selected by faculty for academic breadth, leadership, and love of learning; awarded *Atlanta in 100 Objects* by the Atlanta Alumni Association of Phi Beta Kappa
 
 ---
 
