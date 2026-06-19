@@ -43,13 +43,8 @@ Implementation of foundational RL algorithms from scratch for complex environmen
 * **Bipedal Walker:** Implemented SAC, DDPG, and TD3 for Easy/Hardcore environments.
 * **Lunar Lander:** Implemented PPO and REINFORCE to navigate complex physics.
 * **Flappy Bird:** Implemented DQL with Dueling and Double DQN extensions.
-* **Link:** [GitHub Profile](https://github.com/Rishi-Jain-27)
-
-### Blackjack RL
-PyTorch implementations from scratch of Group-Relative Policy Optimization (GRPO) and Robust Policy Optimization (RPO), solving the Blackjack-v1 environment from Gymnasium. Hyperparameters are configurable per experiment, with automatic logging, best-model checkpointing, and live reward/epsilon plots.
-* **Tech:** Python 3.11, PyTorch, Gymnasium.
-* **References:** [DeepSeekMath (GRPO)](https://arxiv.org/pdf/2402.03300), [Robust Policy Optimization in Deep RL](https://arxiv.org/pdf/2212.07536).
-* **Link:** [GitHub](https://github.com/Rishi-Jain-27/blackjack-rl)
+* **Blackjack:** Implemented GRPO and RPO from scratch in PyTorch on Gymnasium's Blackjack-v1. [GitHub](https://github.com/Rishi-Jain-27/blackjack-rl)
+* **chessMAPPO:** Implemented Multi-Agent PPO (MAPPO) self-play between white and black agents, built on python-chess and PettingZoo. [GitHub](https://github.com/Rishi-Jain-27/chess-marl)
 
 ## Blog & Notes
 Check out my [personal blog](https://rishi-jain-27.github.io/) for technical deep dives, project walkthroughs, and conceptual notes on deep learning.
