@@ -3,15 +3,58 @@
 ---
 @charset "utf-8";
 
-/* ----- Theme tokens ----- */
-$bg:        #1e1f2a;
-$bg-elev:   #292a36;
-$fg:        #f0f0f5;
-$fg-muted:  #adadba;
-$fg-dim:    #797a85;
-$rule:      #363745;
-$accent:    #d4af7a;
-$accent-hi: #ebc999;
+/* ----- Theme tokens -----
+   Colours live as CSS custom properties so the site can switch between the
+   default dark theme and an opt-in light theme at runtime: the toggle is in the
+   header and the no-flash bootstrap (sets data-theme on <html> before first
+   paint) lives in _includes/head.html. The Sass variables below just point at
+   the custom properties, so the couple-hundred colour references further down
+   never had to change. Translucent colours go through tint() — relative colour
+   syntax — so they track whichever accent/surface the active theme defines;
+   with unchanged r g b channels that compiles to exactly the old rgba() in dark
+   mode, so the dark theme renders identically. */
+:root {
+  --bg:        #1e1f2a;
+  --bg-elev:   #292a36;
+  --fg:        #f0f0f5;
+  --fg-muted:  #adadba;
+  --fg-dim:    #797a85;
+  --rule:      #363745;
+  --accent:    #d4af7a;
+  --accent-hi: #ebc999;
+  --viz-canvas: rgba(0, 0, 0, 0.18);   /* dark plot panel behind the canvas viz */
+  --inset:      rgba(0, 0, 0, 0.18);   /* recessed control chips (quantize viz) */
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg:        #faf7f1;   /* warm cream, not a cold white */
+  --bg-elev:   #f1ebdf;
+  --fg:        #2b2a28;
+  --fg-muted:  #5f5c54;
+  --fg-dim:    #8c887e;
+  --rule:      #e4ddcf;
+  --accent:    #8a5e16;   /* deep antique gold: clears AA contrast for links on cream */
+  --accent-hi: #6f4a0f;
+  --viz-canvas: #1d1e27;  /* keep the canvas viz a dark instrument panel */
+  --inset:      #ece5d8;
+  color-scheme: light;
+}
+
+$bg:        var(--bg);
+$bg-elev:   var(--bg-elev);
+$fg:        var(--fg);
+$fg-muted:  var(--fg-muted);
+$fg-dim:    var(--fg-dim);
+$rule:      var(--rule);
+$accent:    var(--accent);
+$accent-hi: var(--accent-hi);
+
+/* Translucent colour from a token (whose value is a var()), via relative colour
+   syntax so it follows the active theme. The string is fully interpolated so
+   Sass passes it through untouched rather than trying to evaluate rgb(from …). */
+@function tint($color, $a) {
+  @return #{"rgb(from #{$color} r g b / #{$a})"};
+}
 
 $content-width: 640px;
 $font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text",
@@ -57,8 +100,8 @@ body {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(900px 480px at 50% -120px, rgba($accent, 0.10), transparent 65%),
-    radial-gradient(700px 400px at 90% 10%, rgba($accent, 0.04), transparent 70%);
+    radial-gradient(900px 480px at 50% -120px, tint($accent, 0.10), transparent 65%),
+    radial-gradient(700px 400px at 90% 10%, tint($accent, 0.04), transparent 70%);
 }
 @media (prefers-reduced-motion: no-preference) {
   @keyframes glow-drift {
@@ -84,7 +127,7 @@ body {
   transform: scaleX(0);
   transform-origin: 0 50%;
   background: linear-gradient(90deg, $accent, $accent-hi);
-  box-shadow: 0 0 12px -2px rgba($accent, 0.6);
+  box-shadow: 0 0 12px -2px tint($accent, 0.6);
   z-index: 1000;
   pointer-events: none;
 }
@@ -183,10 +226,10 @@ table tbody td:first-child {
   font-weight: 500;
 }
 table tbody tr:nth-child(even) td {
-  background: rgba($bg-elev, 0.4);
+  background: tint($bg-elev, 0.4);
 }
 
-::selection { background: rgba($accent, 0.25); color: $fg; }
+::selection { background: tint($accent, 0.25); color: $fg; }
 
 /* ----- Layout primitives ----- */
 .wrapper {
@@ -204,7 +247,7 @@ table tbody tr:nth-child(even) td {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba($bg, 0.85);
+  background: tint($bg, 0.85);
   backdrop-filter: saturate(140%) blur(8px);
   -webkit-backdrop-filter: saturate(140%) blur(8px);
   border-bottom: 1px solid $rule;
@@ -318,8 +361,8 @@ table tbody tr:nth-child(even) td {
   font-weight: 400;
   letter-spacing: 0.04em;
   color: $accent;
-  background: rgba($accent, 0.08);
-  border: 1px solid rgba($accent, 0.35) !important;
+  background: tint($accent, 0.08);
+  border: 1px solid tint($accent, 0.35) !important;
   border-radius: 999px;
   text-decoration: none !important;
   white-space: nowrap;
@@ -350,11 +393,11 @@ table tbody tr:nth-child(even) td {
   padding: 4px;
   border-radius: 10px;
   background:
-    linear-gradient(135deg, rgba($accent, 0.95), rgba($accent, 0.35) 55%, rgba($accent, 0.15));
+    linear-gradient(135deg, tint($accent, 0.95), tint($accent, 0.35) 55%, tint($accent, 0.15));
   box-shadow:
-    0 0 0 1px rgba($accent, 0.25),
-    0 12px 40px -12px rgba($accent, 0.45),
-    0 0 80px -20px rgba($accent, 0.35);
+    0 0 0 1px tint($accent, 0.25),
+    0 12px 40px -12px tint($accent, 0.45),
+    0 0 80px -20px tint($accent, 0.35);
   line-height: 0;
 }
 .hero-photo {
@@ -368,15 +411,15 @@ table tbody tr:nth-child(even) td {
   @keyframes hero-photo-pulse {
     0%, 100% {
       box-shadow:
-        0 0 0 1px rgba($accent, 0.25),
-        0 12px 40px -12px rgba($accent, 0.45),
-        0 0 80px -20px rgba($accent, 0.35);
+        0 0 0 1px tint($accent, 0.25),
+        0 12px 40px -12px tint($accent, 0.45),
+        0 0 80px -20px tint($accent, 0.35);
     }
     50% {
       box-shadow:
-        0 0 0 1px rgba($accent, 0.32),
-        0 14px 48px -10px rgba($accent, 0.55),
-        0 0 100px -14px rgba($accent, 0.55);
+        0 0 0 1px tint($accent, 0.32),
+        0 14px 48px -10px tint($accent, 0.55),
+        0 0 100px -14px tint($accent, 0.55);
     }
   }
   .hero-photo-frame {
@@ -414,7 +457,7 @@ table tbody tr:nth-child(even) td {
   justify-content: center;
   gap: 0.45rem;
   padding: 0.85rem 0.5rem 0.7rem;
-  background: rgba($bg-elev, 0.55);
+  background: tint($bg-elev, 0.55);
   border: 1px solid $rule;
   border-radius: 7px;
   color: $fg-muted;
@@ -423,8 +466,8 @@ table tbody tr:nth-child(even) td {
   transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, color 150ms ease;
 }
 .tech-tile:hover {
-  border-color: rgba($accent, 0.55) !important;
-  background: rgba($bg-elev, 0.95);
+  border-color: tint($accent, 0.55) !important;
+  background: tint($bg-elev, 0.95);
   transform: translateY(-2px);
   color: $fg;
 }
@@ -533,8 +576,8 @@ table tbody tr:nth-child(even) td {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: $accent;
-  background: rgba($accent, 0.08);
-  border: 1px solid rgba($accent, 0.35) !important;
+  background: tint($accent, 0.08);
+  border: 1px solid tint($accent, 0.35) !important;
   border-radius: 999px;
   vertical-align: 0.18em;
   white-space: nowrap;
@@ -869,6 +912,38 @@ mjx-container { color: $fg; }
   .post-meta .post-categories { text-align: left; }
 }
 
+/* ----- Theme toggle (header control; logic in _includes/head.html) -----
+   Matches the ⌘K trigger's surface. Shows the icon of the theme you'd switch
+   to: a sun in dark mode, a moon in light mode. Both glyphs are in the markup
+   and CSS swaps which is visible off the <html data-theme> attribute, so the
+   icon is correct on first paint with no JS flicker. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: tint($bg-elev, 0.6);
+  border: 1px solid $rule;
+  border-radius: 7px;
+  color: $fg-muted;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+.theme-toggle:hover {
+  border-color: tint($accent, 0.5);
+  color: $accent-hi;
+  background: tint($bg-elev, 0.95);
+}
+.theme-toggle:active { transform: scale(0.94); }
+.theme-toggle .theme-toggle-icon { display: none; }
+.theme-toggle .theme-toggle-sun { display: block; }
+:root[data-theme="light"] .theme-toggle .theme-toggle-sun { display: none; }
+:root[data-theme="light"] .theme-toggle .theme-toggle-moon { display: block; }
+
 /* ============================================================
    ⌘K command palette  (behaviour in _includes/command_palette.html)
    ============================================================ */
@@ -877,7 +952,7 @@ mjx-container { color: $fg; }
   align-items: center;
   gap: 0.5rem;
   padding: 0.32rem 0.6rem;
-  background: rgba($bg-elev, 0.6);
+  background: tint($bg-elev, 0.6);
   border: 1px solid $rule;
   border-radius: 7px;
   color: $fg-muted;
@@ -886,7 +961,7 @@ mjx-container { color: $fg; }
   cursor: pointer;
   transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
 }
-.cmdk-trigger:hover { border-color: rgba($accent, 0.5); color: $fg; background: rgba($bg-elev, 0.95); }
+.cmdk-trigger:hover { border-color: tint($accent, 0.5); color: $fg; background: tint($bg-elev, 0.95); }
 .cmdk-trigger kbd {
   font-family: $font-mono;
   font-size: 0.7rem;
@@ -924,8 +999,8 @@ mjx-container { color: $fg; }
   border-radius: 12px;
   box-shadow:
     0 24px 70px -20px rgba(#000, 0.7),
-    0 0 0 1px rgba($accent, 0.08),
-    0 0 60px -30px rgba($accent, 0.4);
+    0 0 0 1px tint($accent, 0.08),
+    0 0 60px -30px tint($accent, 0.4);
   overflow: hidden;
 }
 .cmdk-input-row {
@@ -965,7 +1040,7 @@ mjx-container { color: $fg; }
   cursor: pointer;
   border-left: 2px solid transparent;
 }
-.cmdk-row.is-selected { background: rgba($accent, 0.12); border-left-color: $accent; }
+.cmdk-row.is-selected { background: tint($accent, 0.12); border-left-color: $accent; }
 .cmdk-kind {
   font-family: $font-mono;
   font-size: 0.6rem;
@@ -1055,14 +1130,14 @@ mjx-container { color: $fg; }
   background: $bg-elev;
   border: 1px solid $rule;
   border-radius: 10px;
-  box-shadow: 0 0 0 1px rgba($accent, 0.05), 0 14px 40px -22px rgba($accent, 0.35);
+  box-shadow: 0 0 0 1px tint($accent, 0.05), 0 14px 40px -22px tint($accent, 0.35);
 }
 .vec-viz-canvas {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 7px;
-  background: rgba(#000, 0.18);
+  background: var(--viz-canvas);
   touch-action: none;
   cursor: grab;
 }
@@ -1095,7 +1170,7 @@ mjx-container { color: $fg; }
   background: $bg-elev;
   border: 1px solid $rule;
   border-radius: 10px;
-  box-shadow: 0 0 0 1px rgba($accent, 0.05), 0 14px 40px -22px rgba($accent, 0.35);
+  box-shadow: 0 0 0 1px tint($accent, 0.05), 0 14px 40px -22px tint($accent, 0.35);
 }
 .quant-viz-bar {
   display: flex;
@@ -1112,7 +1187,7 @@ mjx-container { color: $fg; }
   font-size: 0.72rem;
   letter-spacing: 0.02em;
   color: $fg-muted;
-  background: rgba(#000, 0.18);
+  background: var(--inset);
   border: 1px solid $rule;
   border-radius: 6px;
   padding: 0.32rem 0.6rem;
@@ -1120,7 +1195,7 @@ mjx-container { color: $fg; }
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 .quant-viz-bits button:hover,
-.quant-viz-outlier:hover { color: $accent-hi; border-color: rgba($accent, 0.5); }
+.quant-viz-outlier:hover { color: $accent-hi; border-color: tint($accent, 0.5); }
 .quant-viz-bits button.is-on {
   color: $bg;
   background: $accent;
@@ -1132,7 +1207,7 @@ mjx-container { color: $fg; }
   width: 100%;
   height: auto;
   border-radius: 7px;
-  background: rgba(#000, 0.18);
+  background: var(--viz-canvas);
   touch-action: none;
   cursor: grab;
 }
@@ -1161,7 +1236,7 @@ mjx-container { color: $fg; }
   background: $bg-elev;
   border: 1px solid $rule;
   border-radius: 10px;
-  box-shadow: 0 0 0 1px rgba($accent, 0.05), 0 14px 40px -22px rgba($accent, 0.35);
+  box-shadow: 0 0 0 1px tint($accent, 0.05), 0 14px 40px -22px tint($accent, 0.35);
 }
 .flow-viz svg {
   display: block;

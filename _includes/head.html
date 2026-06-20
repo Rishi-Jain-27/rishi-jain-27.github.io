@@ -10,7 +10,60 @@
   <meta name="copyright" content="&copy; {{ site.name }} {{ site.time | date: '%Y' }}">
   {% endif %}
 
-  <meta name="theme-color" content="#0b0b0d">
+  <meta name="theme-color" content="#1e1f2a">
+
+  <!-- Colour theme: set <html data-theme> before the stylesheet loads so there's
+       no flash. Default is the dark brand theme; we honour a stored choice, and
+       fall back to the OS preference when the visitor hasn't picked one. The
+       toggle button lives in the header; __toggleTheme is also reused by ⌘K. -->
+  <script>
+    (function () {
+      var KEY = 'theme';
+      var root = document.documentElement;
+      function systemPref() {
+        return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+      }
+      function stored() {
+        try { var v = localStorage.getItem(KEY); return (v === 'light' || v === 'dark') ? v : null; } catch (e) { return null; }
+      }
+      function apply(theme) {
+        if (theme === 'light') root.setAttribute('data-theme', 'light');
+        else root.removeAttribute('data-theme');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'light' ? '#faf7f1' : '#1e1f2a');
+        var btns = document.querySelectorAll('[data-theme-toggle]');
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].setAttribute('aria-label', theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+          btns[i].setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+        }
+      }
+      window.__toggleTheme = function () {
+        var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        apply(next);
+      };
+
+      apply(stored() || systemPref());   /* pre-paint, before the body exists */
+
+      function ready(fn) {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+        else fn();
+      }
+      ready(function () {
+        apply(stored() || systemPref());   /* re-stamp aria now the button is in the DOM */
+        var btns = document.querySelectorAll('[data-theme-toggle]');
+        for (var i = 0; i < btns.length; i++) { btns[i].addEventListener('click', window.__toggleTheme); }
+      });
+
+      /* Track the OS setting live, but only while the visitor hasn't pinned one. */
+      if (window.matchMedia) {
+        var mq = window.matchMedia('(prefers-color-scheme: light)');
+        var onChange = function () { if (!stored()) apply(systemPref()); };
+        if (mq.addEventListener) mq.addEventListener('change', onChange);
+        else if (mq.addListener) mq.addListener(onChange);
+      }
+    })();
+  </script>
 
   <link rel="icon" type="image/svg+xml" href="{{ "/assets/icons/favicon.svg" | prepend: site.baseurl }}">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ "/assets/icons/favicon-32x32.png" | prepend: site.baseurl }}">

@@ -27,7 +27,8 @@
       { "t": "GitHub", "u": "https://github.com/rishi-jain-27", "k": "go", "x": true },
       { "t": "Email Rishi", "u": "https://mail.google.com/mail/?view=cm&fs=1&to=27rishijainpersonalemail@gmail.com&su=Hello%20Rishi", "k": "go", "x": true },
       { "t": "LinkedIn", "u": "https://www.linkedin.com/in/rishi-jain-14a98a405/", "k": "go", "x": true },
-      { "t": "RSS feed", "u": {{ "/feed.xml" | prepend: site.baseurl | jsonify }}, "k": "go", "x": true }
+      { "t": "RSS feed", "u": {{ "/feed.xml" | prepend: site.baseurl | jsonify }}, "k": "go", "x": true },
+      { "t": "Toggle light / dark theme", "k": "action", "a": "theme" }
     ];
 
     var root = document.getElementById('cmdk');
@@ -41,6 +42,7 @@
     function meta(it) {
       if (it.k === 'post') return (it.d || '') + (it.c ? ' · ' + it.c : '');
       if (it.k === 'page') return 'page';
+      if (it.k === 'action') return 'toggle';
       return it.x ? 'open ↗' : 'go';
     }
 
@@ -71,7 +73,7 @@
       }
       scored.sort(function (a, b) { return b.sc - a.sc; });
       if (q === '') scored.sort(function (a, b) {
-        var order = { post: 0, page: 1, go: 2 };
+        var order = { post: 0, page: 1, go: 2, action: 3 };
         return order[a.it.k] - order[b.it.k];
       });
       scored = scored.slice(0, 12);
@@ -112,6 +114,7 @@
 
     function go(it) {
       close();
+      if (it.k === 'action' && it.a === 'theme') { if (window.__toggleTheme) window.__toggleTheme(); return; }
       if (it.x) { window.open(it.u, '_blank', 'noopener'); }
       else { window.location.href = it.u; }
     }
